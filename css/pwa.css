@@ -190,6 +190,29 @@
   cursor: default;
 }
 
+/* 셀렉트(Select) 박스 모바일/PC 디자인 완벽 통일화 (-webkit-appearance 정규화) */
+select.form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px 16px;
+  padding-right: 38px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+select.form-input:disabled {
+  background-color: var(--navy-50);
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+select.form-input::-ms-expand {
+  display: none;
+}
+
 /* UID 5-Circle Boxes & N+ Circular Button (Step 2 Header) */
 .uid-header-group {
   display: flex;
