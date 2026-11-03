@@ -1,0 +1,441 @@
+/**
+ * @file satisfaction.css
+ * @description 부평형 지역사회 통합돌봄 이용자 만족도 조사 모바일/PC 반응형 스타일시트
+ */
+
+:root {
+  --primary: #0284c7;
+  --primary-dark: #0369a1;
+  --primary-light: #e0f2fe;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50: #f8fafc;
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --success: #10b981;
+  --success-light: #ecfdf5;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+  background-color: #f1f5f9;
+  color: var(--slate-900);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 90px;
+}
+
+/* 상단 앱 헤더 */
+.satisfaction-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #ffffff;
+  border-bottom: 1px solid var(--slate-200);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.2px;
+}
+
+.header-main-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--slate-900);
+}
+
+.btn-back-link {
+  font-size: 13px;
+  color: var(--slate-600);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--slate-100);
+  font-weight: 600;
+}
+
+/* 메인 컨테이너 */
+.survey-container {
+  max-width: 760px;
+  margin: 16px auto;
+  padding: 0 14px;
+}
+
+/* 섹션 카드 */
+.survey-section-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--slate-200);
+  padding: 18px 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-head {
+  border-bottom: 2px solid var(--slate-100);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--slate-900);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-badge {
+  font-size: 11px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* 폼 그리드 및 입력 필드 */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 580px) {
+  .form-grid-2, .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--slate-700);
+  margin-bottom: 5px;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: var(--danger);
+}
+
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--slate-900);
+  transition: border-color 0.15s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+/* 응답자 (본인/가족/기타) 라디오 칩 */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-item {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip-item input[type="radio"],
+.chip-item input[type="checkbox"] {
+  display: none;
+}
+
+.chip-text {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  background: var(--slate-50);
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.chip-item input:checked + .chip-text {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+/* 대영역 Ⅲ: 문항 카드 */
+.question-item-card {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  margin-bottom: 14px;
+  background: #ffffff;
+}
+
+.question-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.question-title-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-900);
+  line-height: 1.45;
+}
+
+.question-category-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--slate-100);
+  color: var(--slate-600);
+}
+
+/* 리커트 5점 척도 선택 버튼 그룹 */
+.likert-button-group {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .likert-button-group {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+}
+
+.likert-btn-label {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 4px;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  background: var(--slate-50);
+  text-align: center;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.likert-btn-label input[type="radio"] {
+  display: none;
+}
+
+.likert-score-badge {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--slate-700);
+  margin-bottom: 3px;
+}
+
+.likert-desc-text {
+  font-size: 11px;
+  color: var(--slate-500);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 리커트 선택 상태별 테마 */
+/* 1~2점: 주의/불만족 (Red/Orange) */
+.likert-btn-label:has(input[value="1"]:checked) {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+.likert-btn-label:has(input[value="1"]:checked) .likert-score-badge,
+.likert-btn-label:has(input[value="1"]:checked) .likert-desc-text {
+  color: #b91c1c;
+}
+
+.likert-btn-label:has(input[value="2"]:checked) {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+.likert-btn-label:has(input[value="2"]:checked) .likert-score-badge,
+.likert-btn-label:has(input[value="2"]:checked) .likert-desc-text {
+  color: #b45309;
+}
+
+/* 3점: 보통 (Slate) */
+.likert-btn-label:has(input[value="3"]:checked) {
+  background: #f8fafc;
+  border-color: #64748b;
+}
+.likert-btn-label:has(input[value="3"]:checked) .likert-score-badge,
+.likert-btn-label:has(input[value="3"]:checked) .likert-desc-text {
+  color: #334155;
+}
+
+/* 4~5점: 만족/매우만족 (Blue/Emerald) */
+.likert-btn-label:has(input[value="4"]:checked) {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+.likert-btn-label:has(input[value="4"]:checked) .likert-score-badge,
+.likert-btn-label:has(input[value="4"]:checked) .likert-desc-text {
+  color: #15803d;
+}
+
+.likert-btn-label:has(input[value="5"]:checked) {
+  background: #ecfdf5;
+  border-color: #059669;
+}
+.likert-btn-label:has(input[value="5"]:checked) .likert-score-badge,
+.likert-btn-label:has(input[value="5"]:checked) .likert-desc-text {
+  color: #047857;
+}
+
+/* 1~2점 체크 시 나타나는 동적 불만족 사유 입력 박스 */
+.sub-complaint-box {
+  margin-top: 10px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sub-complaint-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #be123c;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sub-complaint-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  border: 1px solid #f43f5e;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #881337;
+}
+
+.sub-complaint-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2);
+}
+
+/* 하단 고정 바 */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: #ffffff;
+  border-top: 1px solid var(--slate-200);
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary-action {
+  flex: 2;
+  padding: 12px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #0f172a;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background: #1e293b;
+}
+
+.btn-secondary-action {
+  flex: 1;
+  padding: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--slate-700);
+  background: var(--slate-100);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.btn-secondary-action:hover {
+  background: var(--slate-200);
+}

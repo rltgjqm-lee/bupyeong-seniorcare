@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>부평구 통합돌봄 - 참여기관 관리자 포털</title>
+<script>
+  // 관리자 인증 세션 가드 (미인증 시 로그인 페이지로 리다이렉트)
+  if (sessionStorage.getItem('bupyeong_admin_auth') !== 'true') {
+    window.location.replace('admin.html');
+  }
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/admin.css">
+<link rel="icon" type="image/png" href="../img/부평구.png">
+
+<!-- Daum / Kakao Postcode Service -->
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<!-- html2pdf 공식 PDF 출력 엔진 -->
+<script src="../lib/html2pdf.bundle.min.js"></script>
+<!-- ExcelJS 17열 엑셀 대장 엔진 -->
+<script src="../lib/exceljs.min.js"></script>
+<!-- Leaflet.js 무료 오픈소스 지도 엔진 & CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- ========================================================
+       1. 좌측 LNB 계층 메뉴 (Sidebar - 게이트키퍼 표준 준수)
+       ======================================================== -->
+  <aside class="admin-sidebar no-print">
+    <div>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-title" style="display: flex; align-items: center; gap: 8px;">
+          <img src="../img/부평구.png" alt="부평구 로고" style="height: 24px; vertical-align: middle; object-fit: contain;">
+          부평구 통합돌봄
+        </div>
+        <div class="sidebar-brand-sub">참여기관 통합 관제 시스템</div>
+      </div>
+
+      <div class="sidebar-nav-scroll">
+        <!-- 그룹 1. 기관정보 -->
+        <div class="sidebar-group open" id="groupOrg">
+          <button type="button" class="sidebar-group-btn" data-group="groupOrg">
+            <span>1. 기관정보</span>
+            <span class="group-arrow">▼</span>
+          </button>
+          <ul class="sidebar-menu-list">
+            <li>
+              <button class="sidebar-menu-btn active" data-pane="paneOrgBasic">
+                <span>기초정보</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneOrgAdmins">
+                <span>관리자 관리</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneOrgInspectors">
+                <span>참여자(활동가) 관리</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneMyInfo">
+                <span>내 정보</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 그룹 2. 안부대상자 및 활동관리 -->
+        <div class="sidebar-group open" id="groupTarget">
+          <button type="button" class="sidebar-group-btn" data-group="groupTarget">
+            <span>2. 안부대상자 및 활동</span>
+            <span class="group-arrow">▼</span>
+          </button>
+          <ul class="sidebar-menu-list">
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneTargetList">
+                <span>대상자 현황 (UID 매칭)</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneActivityCards">
+                <span>⭐ 활동관리카드 누적 대장</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneMonitoringRecords">
+                <span>정밀 모니터링 (심층연계의뢰)</span>
+              </button>
+            </li>
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneTargetCreate">
+                <span>신규 대상자 등록 (UID 채번)</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 그룹 3. 통계 및 서식 -->
+        <div class="sidebar-group open" id="groupStats">
+          <button type="button" class="sidebar-group-btn" data-group="groupStats">
+            <span>3. 통계 및 서식</span>
+            <span class="group-arrow">▼</span>
+          </button>
+          <ul class="sidebar-menu-list">
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneStatsAndForms">
+                <span>만족도 통계 & 서식 반출</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 그룹 4. 부평 22개동 GIS 지도 관제 -->
+        <div class="sidebar-group open" id="groupGis">
+          <button type="button" class="sidebar-group-btn" data-group="groupGis">
+            <span>4. GIS 관제</span>
+            <span class="group-arrow">▼</span>
+          </button>
+          <ul class="sidebar-menu-list">
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneTargetMap">
+                <span>부평구 22개동 지도 관제</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 그룹 5. 감사로그 -->
+        <div class="sidebar-group" id="groupAudit">
+          <button type="button" class="sidebar-group-btn" data-group="groupAudit">
+            <span>5. 감사로그</span>
+            <span class="group-arrow">▶</span>
+          </button>
+          <ul class="sidebar-menu-list">
+            <li>
+              <button class="sidebar-menu-btn" data-pane="paneAuditLog">
+                <span>개인정보 열람 감사 로그</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="font-weight: 700; color: #ffffff;">인천 부평구 통합돌봄센터</div>
+      <div style="font-family: monospace; color: #94a3b8; font-size: 11px; margin-top: 2px;">O-28-237-01</div>
+    </div>
+  </aside>
+
+  <!-- ========================================================
+       2. 우측 메인 컨텐츠 영역 (Header & Main)
+       ======================================================== -->
+  <div class="admin-main-wrapper">
+
+    <!-- 상단 글로벌 헤더 바 -->
+    <header class="top-header-bar no-print">
+      <div class="header-breadcrumb">
+        <span>참여기관</span>
+        <span>&gt;</span>
+        <span id="headerOrgBreadcrumb">부평구 통합돌봄센터</span>
+        <span>&gt;</span>
+        <span class="current" id="headerPageBreadcrumb">기초정보</span>
+      </div>
+
+      <div class="header-actions">
+        <div class="header-session-info">
+          <span>인천 부평구 (M-28-237)</span>
+          <span style="color:#cbd5e1;">|</span>
+          <span style="font-weight:600; color:#0f172a;" id="dispHeaderAdminId">총괄관리자</span>
+        </div>
+        <a href="/pages/satisfaction-survey.html" target="_blank" style="padding: 5px 12px; font-size: 12px; font-weight: 700; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+          📝 이용자 만족도 조사
+        </a>
+        <button type="button" class="btn-logout" id="btnAdminLogout" style="padding: 5px 12px; font-size: 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;">
+          로그아웃
+        </button>
+      </div>
+    </header>
+
+    <!-- 메인 페인 동적 컨테이너 -->
+    <main class="admin-content-area" id="adminMainContent">
+      <div id="paneOrgBasic" class="admin-pane active"></div>
+      <div id="paneOrgAdmins" class="admin-pane"></div>
+      <div id="paneOrgInspectors" class="admin-pane"></div>
+      <div id="paneMyInfo" class="admin-pane"></div>
+      <div id="paneTargetList" class="admin-pane"></div>
+      <div id="paneActivityCards" class="admin-pane"></div>
+      <div id="paneMonitoringRecords" class="admin-pane"></div>
+      <div id="paneTargetCreate" class="admin-pane"></div>
+      <div id="paneStatsAndForms" class="admin-pane"></div>
+      <div id="paneTargetMap" class="admin-pane"></div>
+      <div id="paneAuditLog" class="admin-pane"></div>
+    </main>
+
+  </div>
+
+</div>
+
+<!-- 카카오 우편번호 레이어 팝업 (관리자용) -->
+<div id="adminPostcodeLayer" style="display:none;position:fixed;overflow:hidden;z-index:99999;-webkit-overflow-scrolling:touch;left:0;top:0;width:100%;height:100%;background:rgba(15,23,42,0.65);">
+  <div style="position:relative;width:100%;max-width:540px;height:100%;margin:0 auto;background:#ffffff;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f172a;color:#ffffff;">
+      <span style="font-weight:700;font-size:15px;">도로명 주소 검색 (부평구)</span>
+      <button type="button" id="closeAdminPostcodeBtn" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;padding:0 6px;">✕</button>
+    </div>
+    <div id="adminPostcodeFrameContainer" style="flex:1;width:100%;height:100%;"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { BupyeongAdminView } from '../js/admin/bupyeongAdminView.js';
+  window.addEventListener('DOMContentLoaded', () => {
+    const adminApp = new BupyeongAdminView();
+    adminApp.init();
+
+    // 로그아웃 이벤트
+    document.getElementById('btnAdminLogout').addEventListener('click', () => {
+      sessionStorage.removeItem('bupyeong_admin_auth');
+      sessionStorage.removeItem('bupyeong_admin_id');
+      window.location.replace('admin.html');
+    });
+  });
+</script>
+
+</body>
+</html>
