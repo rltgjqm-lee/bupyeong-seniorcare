@@ -48,8 +48,6 @@ const server = http.createServer((req, res) => {
     pathname = '/pages/pwa-survey.html';
   } else if (pathname === '/admin' || pathname === '/org-admin') {
     pathname = '/pages/org-admin.html';
-  } else if (pathname === '/satisfaction' || pathname === '/survey') {
-    pathname = '/pages/satisfaction-survey.html';
   }
 
   // API Mock 엔드포인트 처리
