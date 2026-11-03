@@ -121,172 +121,263 @@ export class Step7CompleteView {
     const b = s.basicInfo;
     const t = s.targetProfile;
     const sat = s.satisfaction;
+    const c = s.consent || {};
+    const inspSignatures = c.inspectorSignatures || {};
+    const inspectors = Array.isArray(b.inspectors) && b.inspectors.length > 0 ? b.inspectors : ['김철수', '이영희'];
+
+    // 가구형태 및 대상자특성 undefined 해결
+    const householdStr = t.householdType === '비독거'
+      ? `비독거${t.householdSub ? ` (${t.householdSub})` : ''}`
+      : (t.householdType || '독거');
+    const targetAttrStr = t.targetAttribute || '해당없음';
+
+    const FIELDS_9_10 = [
+      '보건·의료 서비스', '건강관리예방', '일상생활(가사, 식사 등)', '주거 지원', '정서지원', '기타'
+    ];
+    const COMPLAINTS_11 = [
+      '없음', '신청절차', '안내 부족', '제공시간·횟수', '서비스 내용', '제공인력', '기타'
+    ];
+    const ROUTES_1 = [
+      '지인추천', '공무원 안내', '홍보물', '언론', '기타'
+    ];
 
     return `
-      <div style="width: 730px; padding: 24px; font-family: 'Pretendard', sans-serif; color: #000; box-sizing: border-box; line-height: 1.4; font-size: 12px;">
-        <!-- Page 1 Header -->
-        <div style="text-align: center; margin-bottom: 18px;">
-          <h1 style="font-size: 19px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em;">
-            「2026년 부평형 지역사회 통합돌봄서비스」 이용자 만족도 조사
-          </h1>
-          <div style="font-size: 11px; color: #475569;">서식번호: ${b.maskedSurveyUid || 'S-28-237-01-***'}</div>
-        </div>
+      <div style="width: 710px; margin: 0 auto; font-family: 'Pretendard', sans-serif; color: #000; box-sizing: border-box; line-height: 1.45; font-size: 11.5px; background: #ffffff;">
+        
+        <!-- ================= [ PAGE 1: 기본정보 및 5점 척도 만족도 (A4 1장 꽉 찬 밸런스) ] ================= -->
+        <div class="pdf-page-1" style="min-height: 1040px; box-sizing: border-box; padding: 42px 32px 30px 32px; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always;">
+          <div>
+            <!-- Page 1 Header -->
+            <div style="text-align: center; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+              <h1 style="font-size: 19px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: -0.02em;">
+                「2026년 부평형 지역사회 통합돌봄서비스」 이용자 만족도 조사
+              </h1>
+              <div style="font-size: 11px; color: #475569;">서식번호: ${b.maskedSurveyUid || 'S-28-237-01-***'}</div>
+            </div>
 
-        <!-- I. 조사 기본정보 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅰ. 조사 기본정보 [조사자 사전기입]
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 11.5px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 14%;">행정동</th>
-            <td style="border: 1px solid #000; padding: 5px; width: 20%;">${t.dong || '부평구'}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 14%;">대상자명</th>
-            <td style="border: 1px solid #000; padding: 5px; width: 20%;">${maskName(t.targetName)}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 14%;">생년월일</th>
-            <td style="border: 1px solid #000; padding: 5px;">${maskBirth(t.birth)}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">조사일</th>
-            <td style="border: 1px solid #000; padding: 5px;">${b.inspectionDate}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">조사자</th>
-            <td style="border: 1px solid #000; padding: 5px;">${b.inspectors.join(', ')}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">응답자</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${sat.respondentType}${sat.respondentType !== '본인' && sat.respondentDetail ? ` (${sat.respondentDetail})` : ''}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">서비스명</th>
-            <td colspan="5" style="border: 1px solid #000; padding: 5px;">${b.project}</td>
-          </tr>
-        </table>
+            <!-- I. 조사 기본정보 -->
+            <div style="background: #e2e8f0; padding: 6px 12px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a; display: flex; justify-content: space-between; align-items: center;">
+              <span>Ⅰ. 조사 기본정보 [조사자 사전기입]</span>
+              <span style="font-size: 12px; font-weight: 800; font-family: 'Pretendard', sans-serif; letter-spacing: 0.5px; color: #0f172a;">관리번호: ${t.caseUid || 'C-28-237-01-001'}</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; border: 1px solid #000; font-size: 11.5px;">
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px; width: 14%;">행정동</th>
+                <td style="border: 1px solid #000; padding: 9px 10px; width: 20%;">${t.dong || '부평구'}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px; width: 14%;">대상자명</th>
+                <td style="border: 1px solid #000; padding: 9px 10px; width: 20%; font-weight: 700;">${maskName(t.targetName)}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px; width: 14%;">생년월일</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">${maskBirth(t.birth)}</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">조사일</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">${b.inspectionDate}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">조사자</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">${inspectors.join(', ')}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">응답자</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">${sat.respondentType ? `■ ${sat.respondentType}${sat.respondentType !== '본인' && sat.respondentDetail ? ` (${sat.respondentDetail})` : ''}` : '-'}</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">서비스명</th>
+                <td colspan="5" style="border: 1px solid #000; padding: 9px 10px;">${b.project || '부평형 노인일자리 안심살핌사업단'}</td>
+              </tr>
+            </table>
 
-        <!-- II. 조사 기본정보 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅱ. 조사 기본정보 [조사자 사전기입]
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 11.5px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 20%;">➊ 성별</th>
-            <td style="border: 1px solid #000; padding: 5px;">${t.gender === '남' ? '■ 남  □ 여' : '□ 남  ■ 여'}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">➋ 연령대</th>
-            <td style="border: 1px solid #000; padding: 5px;">□ 65세 미만  ■ 65~74세  □ 75세 이상</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">➌ 가구형태</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${t.livingType}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">➍ 사회보장</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${t.socialSecurity}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">➎ 대상자 특성</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${t.targetFeature}</td>
-          </tr>
-        </table>
+            <!-- II. 대상자 기본정보 & 1. 이용 경로 -->
+            <div style="background: #e2e8f0; padding: 6px 10px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a;">
+              Ⅱ. 대상자 기본정보 [조사자 사전기입] & 1. 이용 경로
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; border: 1px solid #000; font-size: 11.5px;">
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px; width: 18%;">➊ 성별</th>
+                <td style="border: 1px solid #000; padding: 9px 10px; width: 32%;">${t.gender === '남' ? '■ 남  □ 여' : (t.gender === '여' ? '□ 남  ■ 여' : '□ 남  □ 여')}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px; width: 18%;">➋ 연령대</th>
+                <td style="border: 1px solid #000; padding: 9px 10px; width: 32%;">□ 65세 미만  ■ 65~74세  □ 75세 이상</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">➌ 가구형태</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">■ ${householdStr}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">➍ 사회보장</th>
+                <td style="border: 1px solid #000; padding: 9px 10px;">■ ${t.socialSecurity || '일반가구'}</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 9px 8px;">➎ 대상자 특성</th>
+                <td colspan="3" style="border: 1px solid #000; padding: 9px 10px;">■ ${targetAttrStr}</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 10px 8px;">1. 이용 경로</th>
+                <td colspan="3" style="border: 1px solid #000; padding: 10px 10px;">
+                  ${ROUTES_1.map(r => `${sat.route === r ? '■' : '□'} ${r}`).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')}
+                </td>
+              </tr>
+            </table>
 
-        <!-- III. 서비스 만족도 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅲ. 서비스 만족도
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 11px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 6%;">번호</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 44%;">응답 문항</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 10%;">전혀아님(1)</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 10%;">그렇지않음(2)</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 10%;">보통(3)</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 10%;">그렇다(4)</th>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 4px; width: 10%;">매우그렇다(5)</th>
-          </tr>
-          ${[
-            { num: 2, label: '접근성', text: '신청·이용 절차가 이해하기 쉽고 편리하였습니까?', score: sat.scores.accessibility },
-            { num: 3, label: '적시성', text: '필요한 서비스를 적절한 시기에 잘 연계받았습니까?', score: sat.scores.timeliness },
-            { num: 4, label: '적합성', text: '제공받은 서비스 내용에 만족하십니까?', score: sat.scores.suitability },
-            { num: 5, label: '효과성', text: '서비스가 실제 생활에 도움이 되었습니까?', score: sat.scores.effectiveness },
-            { num: 6, label: '서비스 품질', text: '서비스 제공자(제공기관)는 귀하의 상황을 이해하고 적절한 서비스를 제공하였습니까?', score: sat.scores.quality },
-            { num: 7, label: '종합만족도', text: '전반적으로 의료·요양 통합돌봄 사업에 만족하십니까?', score: sat.scores.overall },
-            { num: 8, label: '지속 이용 의향', text: '앞으로도 서비스를 이용하고 싶은 의향이 있습니까?', score: sat.scores.continuation }
-          ].map(row => `
-            <tr>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.num}</td>
-              <td style="border: 1px solid #000; padding: 5px;">(${row.label}) ${row.text}</td>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.score === 1 ? '■' : '□'}</td>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.score === 2 ? '■' : '□'}</td>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.score === 3 ? '■' : '□'}</td>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.score === 4 ? '■' : '□'}</td>
-              <td style="border: 1px solid #000; padding: 5px; text-align: center;">${row.score === 5 ? '■' : '□'}</td>
-            </tr>
-          `).join('')}
-        </table>
-
-        <!-- Page 2 Divider (html2pdf page-break) -->
-        <div style="page-break-before: always; margin-top: 24px;"></div>
-
-        <!-- IV. 도움 분야 및 개선 필요 분야 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅳ. 가장 도움이 된 분야 및 개선 필요 분야
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 11.5px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 28%;">9. 가장 도움이 된 분야 (1개)</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${sat.bestField}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">10. 추가 필요 서비스 (복수)</th>
-            <td style="border: 1px solid #000; padding: 5px;">${(sat.neededServices || []).join(', ') || '없음'}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">11. 불편 및 불만 사항 (복수)</th>
-            <td style="border: 1px solid #000; padding: 5px;">${(sat.complaints || []).join(', ') || '없음'}</td>
-          </tr>
-        </table>
-
-        <!-- V. 의견 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅴ. 의견 (응답자의 응답 내용을 자유로이 기재)
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 11.5px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 28%;">12. 가장 만족한 점</th>
-            <td style="border: 1px solid #000; padding: 5px; min-height: 40px;">${sat.bestPoint || '-'}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">13. 불만족 사유 및 건의사항</th>
-            <td style="border: 1px solid #000; padding: 5px; min-height: 40px;">${sat.improvementPoint || '-'}</td>
-          </tr>
-        </table>
-
-        <!-- VI. 조사자 확인 -->
-        <div style="background: #e2e8f0; padding: 4px 8px; font-weight: 800; font-size: 12.5px; margin-bottom: 4px;">
-          Ⅵ. 조사자 확인 [조사자 사후기입]
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; border: 1px solid #000; font-size: 11.5px;">
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 20%;">응답 신뢰도</th>
-            <td style="border: 1px solid #000; padding: 5px; width: 30%;">■ ${sat.reliability}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px; width: 20%;">의사소통</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${sat.communication}</td>
-          </tr>
-          <tr>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">향후 연계</th>
-            <td style="border: 1px solid #000; padding: 5px;">■ ${sat.nextLink}</td>
-            <th style="border: 1px solid #000; background: #f1f5f9; padding: 5px;">특이사항</th>
-            <td style="border: 1px solid #000; padding: 5px;">${sat.specialNote || '-'}</td>
-          </tr>
-        </table>
-
-        <!-- 전자 서명 확인 -->
-        ${s.consent.targetSignature ? `
-          <div style="text-align: right; margin-top: 18px; padding-right: 12px;">
-            <span style="font-size: 13px; font-weight: 700;">응답자 서명: </span>
-            <img src="${s.consent.targetSignature}" style="max-height: 40px; vertical-align: middle; border-bottom: 1px solid #000;">
+            <!-- III. 서비스 만족도 -->
+            <div style="background: #e2e8f0; padding: 6px 10px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a;">
+              Ⅲ. 서비스 만족도 (5점 척도)
+            </div>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 11px;">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 6%; text-align: center;">번호</th>
+                  <th style="border: 1px solid #000; padding: 9px 8px; width: 44%;">응답 문항</th>
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 10%; text-align: center;">전혀아님(1)</th>
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 10%; text-align: center;">그렇지않음(2)</th>
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 10%; text-align: center;">보통(3)</th>
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 10%; text-align: center;">그렇다(4)</th>
+                  <th style="border: 1px solid #000; padding: 9px 4px; width: 10%; text-align: center;">매우그렇다(5)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${[
+                  { num: 2, label: '접근성', text: '신청·이용 절차가 이해하기 쉽고 편리하였습니까?', score: sat.scores?.accessibility },
+                  { num: 3, label: '적시성', text: '필요한 서비스를 적절한 시기에 잘 연계받았습니까?', score: sat.scores?.timeliness },
+                  { num: 4, label: '적합성', text: '제공받은 서비스 내용에 만족하십니까?', score: sat.scores?.suitability },
+                  { num: 5, label: '효과성', text: '서비스가 실제 생활에 도움이 되었습니까?', score: sat.scores?.effectiveness },
+                  { num: 6, label: '서비스 품질', text: '서비스 제공자(제공기관)는 귀하의 상황을 이해하고 적절한 서비스를 제공하였습니까?', score: sat.scores?.quality },
+                  { num: 7, label: '종합만족도', text: '전반적으로 의료·요양 통합돌봄 사업에 만족하십니까?', score: sat.scores?.overall },
+                  { num: 8, label: '지속 이용 의향', text: '앞으로도 서비스를 계속 이용하고 싶은 의향이 있습니까?', score: sat.scores?.continuation }
+                ].map(row => `
+                  <tr>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-weight: 700;">${row.num}</td>
+                    <td style="border: 1px solid #000; padding: 12px 8px; line-height: 1.45;">(${row.label}) ${row.text}</td>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-size: 13px;">${row.score === 1 ? '■' : '□'}</td>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-size: 13px;">${row.score === 2 ? '■' : '□'}</td>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-size: 13px;">${row.score === 3 ? '■' : '□'}</td>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-size: 13px;">${row.score === 4 ? '■' : '□'}</td>
+                    <td style="border: 1px solid #000; padding: 12px 4px; text-align: center; font-size: 13px;">${row.score === 5 ? '■' : '□'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
-        ` : ''}
 
-        <div style="text-align: center; margin-top: 24px; font-weight: 800; font-size: 14px;">
-          설문에 응답해 주셔서 대단히 감사합니다.
+          <div style="text-align: right; font-size: 10px; color: #64748b; padding-top: 10px;">
+            [1 / 2 페이지]
+          </div>
+        </div>
+
+        <!-- ================= [ PAGE 2: 도움분야, 의견, 조사자 확인 및 공식 푸터 (A4 1장 꽉 찬 밸런스) ] ================= -->
+        <div class="pdf-page-2" style="min-height: 1040px; box-sizing: border-box; padding: 42px 32px 30px 32px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <!-- IV. 가장 도움이 된 분야 및 개선 필요 분야 (9~11번 전체 보기 및 바둑판 체크박스) -->
+            <div style="background: #e2e8f0; padding: 6px 12px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a; display: flex; justify-content: space-between; align-items: center;">
+              <span>Ⅳ. 가장 도움이 된 분야 및 개선 필요 분야</span>
+              <span style="font-size: 11.5px; font-weight: 700; font-family: 'Pretendard', sans-serif; letter-spacing: 0.5px; color: #334155;">관리번호: ${t.caseUid || 'C-28-237-01-001'}</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; border: 1px solid #000; font-size: 11px;">
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 13px 10px; width: 28%; text-align: left; line-height: 1.5;">
+                  9. 가장 도움이 된 분야<br><span style="font-size: 10px; font-weight: normal; color: #475569;">(1개 선택)</span>
+                </th>
+                <td style="border: 1px solid #000; padding: 13px 12px;">
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; line-height: 1.6;">
+                    ${FIELDS_9_10.map(f => `
+                      <span>${sat.bestField === f ? '■' : '□'} ${f}</span>
+                    `).join('')}
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 13px 10px; text-align: left; line-height: 1.5;">
+                  10. 추가 필요 서비스<br><span style="font-size: 10px; font-weight: normal; color: #475569;">(복수 선택 가능)</span>
+                </th>
+                <td style="border: 1px solid #000; padding: 13px 12px;">
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; line-height: 1.6;">
+                    ${FIELDS_9_10.map(f => {
+                      const isChecked = (sat.neededServices || []).includes(f);
+                      return `<span>${isChecked ? '■' : '□'} ${f}</span>`;
+                    }).join('')}
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 13px 10px; text-align: left; line-height: 1.5;">
+                  11. 불편 및 불만 사항<br><span style="font-size: 10px; font-weight: normal; color: #475569;">(복수 선택 가능)</span>
+                </th>
+                <td style="border: 1px solid #000; padding: 13px 12px;">
+                  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; line-height: 1.6;">
+                    ${COMPLAINTS_11.map(c => {
+                      const isChecked = (sat.complaints || []).includes(c);
+                      return `<span>${isChecked ? '■' : '□'} ${c}</span>`;
+                    }).join('')}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- V. 의견 -->
+            <div style="background: #e2e8f0; padding: 6px 10px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a;">
+              Ⅴ. 의견 (응답자의 응답 내용을 자유로이 기재)
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; border: 1px solid #000; font-size: 11px;">
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 12px 10px; width: 28%; text-align: left;">12. 가장 만족한 점</th>
+                <td style="border: 1px solid #000; padding: 12px 12px; min-height: 85px; height: 85px; line-height: 1.5; vertical-align: top;">
+                  ${sat.bestPoint || '특이사항 없음'}
+                </td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 12px 10px; text-align: left;">13. 불만족 사유 및 건의사항</th>
+                <td style="border: 1px solid #000; padding: 12px 12px; min-height: 125px; height: 125px; line-height: 1.5; white-space: pre-line; vertical-align: top;">
+                  ${sat.improvementPoint || '특이사항 없음'}
+                </td>
+              </tr>
+            </table>
+
+            <!-- VI. 조사자 확인 -->
+            <div style="background: #e2e8f0; padding: 6px 10px; font-weight: 800; font-size: 12px; margin-bottom: 6px; border-left: 4px solid #0f172a;">
+              Ⅵ. 조사자 확인 [조사자 사후기입]
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; border: 1px solid #000; font-size: 11px;">
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 10px 8px; width: 18%;">응답 신뢰도</th>
+                <td style="border: 1px solid #000; padding: 10px 10px; width: 32%;">${sat.reliability ? `■ ${sat.reliability}` : '-'}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 10px 8px; width: 18%;">의사소통</th>
+                <td style="border: 1px solid #000; padding: 10px 10px; width: 32%;">${sat.communication ? `■ ${sat.communication}` : '-'}</td>
+              </tr>
+              <tr>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 10px 8px;">향후 연계</th>
+                <td style="border: 1px solid #000; padding: 10px 10px;">${sat.nextLink ? `■ ${sat.nextLink}` : '-'}</td>
+                <th style="border: 1px solid #000; background: #f8fafc; padding: 10px 8px;">특이사항</th>
+                <td style="border: 1px solid #000; padding: 10px 10px;">${sat.specialNote || '-'}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- 하단 공식 조사자 확인란 및 공문서 푸터 마감 (전자서명 탑재) -->
+          <div style="border-top: 1px solid #000; padding-top: 14px; margin-top: auto;">
+            <div style="text-align: center; font-size: 12.5px; font-weight: 700; margin-bottom: 12px; color: #0f172a;">
+              상기와 같이 이용자 만족도 조사를 성실히 수행하였음을 확인합니다.
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">
+                조사일시: <span>${b.inspectionDate || getLocalTodayString()}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 24px;">
+                ${inspectors.map((name, idx) => {
+                  const sig = inspSignatures[name];
+                  return `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+                      <span style="font-weight: 700;">조사자 ${idx + 1} (${name}) :</span>
+                      <div style="width: 96px; height: 44px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: #ffffff;">
+                        ${sig ? `<img src="${sig}" style="max-height: 40px; max-width: 90px; object-fit: contain;" alt="서명">` : '<span style="font-size: 11px; color: #94a3b8;">(서명)</span>'}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 10px; margin-bottom: 6px; font-weight: 800; font-size: 14.5px; letter-spacing: -0.01em; color: #1e293b;">
+              인천광역시 부평구 통합돌봄센터
+            </div>
+
+            <div style="text-align: right; font-size: 10px; color: #64748b;">
+              [2 / 2 페이지]
+            </div>
+          </div>
         </div>
       </div>
     `;

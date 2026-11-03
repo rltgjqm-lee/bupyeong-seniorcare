@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부평 통합돌봄 인트로</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 800px;
+            background-color: #f9f9f9;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* 세로 중앙 정렬 스택: 하트 → 로고 → 문구 */
+        .stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            padding: 0 24px;
+        }
+
+        /* 1. 하트 선 그리기 */
+        svg.heart { width: 96px; height: 96px; overflow: visible; }
+        svg.heart path {
+            fill: rgba(124, 179, 66, 0);
+            stroke: #7cb342;
+            stroke-width: 1.2;
+            stroke-dasharray: 80;
+            stroke-dashoffset: 80;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation:
+                drawHeart 1.5s ease-in-out forwards,
+                fillHeart 0.6s ease-out 1.5s forwards;
+        }
+        @keyframes drawHeart { to { stroke-dashoffset: 0; } }
+        @keyframes fillHeart { to { fill: rgba(124, 179, 66, 0.18); } }
+
+        /* 2. 로고 */
+        .logo-img {
+            width: 140px;
+            height: auto;
+            opacity: 0;
+            animation: fadeUp 1s ease-out 1.6s forwards;
+        }
+
+        /* 3. 마지막 구절 */
+        .intro-text {
+            font-family: 'Gowun Dodum', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #333;
+            text-align: center;
+            word-break: keep-all;
+            opacity: 0;
+            animation: fadeUp 1s ease-out 2.6s forwards;
+        }
+        .intro-text .highlight { display: block; color: #4a3e8e; font-size: 28px; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 6px; }
+        .intro-text .sub { display: block; font-size: 17px; font-weight: 400; color: #555; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 4. 메인 화면 */
+        .main-screen {
+            position: absolute;
+            inset: 0;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            z-index: 10;
+        }
+        .main-screen.active { opacity: 1; pointer-events: auto; }
+
+        @media (prefers-reduced-motion: reduce) {
+            svg.heart path, .logo-img, .intro-text { animation-duration: 0.01s; animation-delay: 0s; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="stack">
+            <svg class="heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+
+            <img src="logo@4x.png" alt="부평구 로고 - 참여+나눔 더불어 사는 따뜻한 부평" class="logo-img">
+
+            <p class="intro-text">
+                <span class="highlight">통합돌봄서비스</span>
+                <span class="sub">부평구가 함께합니다.</span>
+            </p>
+        </div>
+
+        <div class="main-screen" id="mainScreen">메인 화면입니다.</div>
+    </div>
+
+    <script>
+        // 타임라인
+        // 0.0s  하트 선 그리기 시작
+        // 1.6s  로고 등장
+        // 2.6s  '통합돌봄서비스 부평구가 함께합니다.' 등장
+        // 4.8s  메인 화면 전환
+        setTimeout(() => {
+            document.getElementById('mainScreen').classList.add('active');
+            // 실제 앱: 여기서 메인 화면 라우팅
+            // 예: window.location.href = '/main';
+        }, 4800);
+    </script>
+
+</body>
+</html>

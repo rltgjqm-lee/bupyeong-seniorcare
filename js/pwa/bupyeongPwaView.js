@@ -60,7 +60,7 @@ export class BupyeongPwaView {
         householdOther: '',
         socialSecurity: '', // 국민기초생활보장제도, 차상위, 일반가구 (현장 조사 시 선택)
         benefitStatus: '', // 맞춤형급여, 차상위, 장애인연금, 기초연금, 기타, 없음
-        targetAttribute: '', // 장기요양재가급여, 노인맞춤돌봄서비스, 장애인활동보조, 해당없음
+        targetAttribute: '', // 장기요양재가급여, 노인맞춤돌봄서비스, 장애인활동보조 수급자, 해당없음, 기타
         housingEnvironment: '청결', // 청결, 보통, 불량 (모니터링 전용)
         housingEnvReason: ''
       },
@@ -92,30 +92,31 @@ export class BupyeongPwaView {
 
       // Step 4~5 (만족도 트랙): 이용자 만족도 조사 (5점 척도 & 11대 피드백)
       satisfaction: {
-        respondentType: '본인',
+        respondentType: '',
         respondentDetail: '',
-        route: '공무원 안내',
+        route: '',
         routeDetail: '',
         scores: {
-          accessibility: 5,
-          timeliness: 5,
-          suitability: 5,
-          effectiveness: 5,
-          quality: 5,
-          overall: 5,
-          continuation: 5
+          accessibility: null,
+          timeliness: null,
+          suitability: null,
+          effectiveness: null,
+          quality: null,
+          overall: null,
+          continuation: null
         },
-        bestField: '일상생활(가사, 식사 등)',
+        bestField: '',
         bestFieldDetail: '',
-        neededServices: ['보건·의료 서비스'],
-        complaints: ['없음'],
+        neededServices: [],
+        complaints: [],
         complaintDetail: '',
         bestPoint: '',
         improvementPoint: '',
-        reliability: '높음',
-        communication: '원활',
-        nextLink: '불필요',
-        specialNote: ''
+        reliability: '',
+        communication: '',
+        nextLink: '',
+        specialNote: '',
+        complaintReasons: {}
       },
 
       // Step 6: 공통 동의 & 전자서명

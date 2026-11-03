@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부평 통합돌봄 인트로</title>
+    <style>
+        /* 기본 초기화 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+        }
+
+        /* 모바일 화면 비율(앱 화면처럼 보이게) 컨테이너 */
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 800px;
+            background-color: #f9f9f9;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* 1. 하트 선 애니메이션 */
+        .heart-container {
+            position: absolute;
+            top: 35%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg.heart {
+            width: 100px;
+            height: 100px;
+        }
+
+        svg.heart path {
+            fill: transparent;
+            stroke: #7cb342; /* 로고의 연두색 계열 */
+            stroke-width: 3;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawHeart 1.5s ease-in-out forwards;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes drawHeart {
+            0% { stroke-dashoffset: 200; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        /* 2. 로고 및 텍스트 컨테이너 */
+        .content-container {
+            position: absolute;
+            top: 30%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: fadeInContent 1s ease-in-out forwards;
+            animation-delay: 1.5s; /* 하트 그려진 후 등장 */
+        }
+
+        .logo-img {
+            width: 220px;
+            margin-bottom: 20px;
+        }
+
+        .intro-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInText 1s ease-in-out forwards;
+            animation-delay: 2.5s; /* 로고 등장 후 텍스트 등장 */
+        }
+
+        /* 텍스트 내 강조 색상 (로고 컬러와 매칭) */
+        .intro-text span.highlight {
+            color: #4a3e8e; /* 보라색 계열 */
+        }
+
+        @keyframes fadeInContent {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInText {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 3. 메인 화면 (인트로 끝나고 보여질 화면) */
+        .main-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            pointer-events: none; /* 애니메이션 전 클릭 방지 */
+            transition: opacity 0.8s ease-in-out;
+            z-index: 10;
+        }
+
+        .main-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 1. 하트 선 애니메이션 SVG -->
+        <div class="heart-container">
+            <svg class="heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+
+        <!-- 2. 로고 및 텍스트 -->
+        <div class="content-container">
+            <!-- 여기에 첨부하신 로고 이미지 경로를 넣습니다. -->
+            <img src="logo.png" alt="부평 통합돌봄 로고" class="logo-img">
+            <div class="intro-text">
+                <span class="highlight">통합 돌봄</span> 부평이 시작합니다.
+            </div>
+        </div>
+
+        <!-- 3. 메인 화면 -->
+        <div class="main-screen" id="mainScreen">
+            메인 화면입니다.
+        </div>
+    </div>
+
+    <script>
+        // 애니메이션 타임라인 설정
+        // 0초: 하트 그리기 시작
+        // 1.5초: 하트 완성 및 로고 등장 (CSS에서 처리)
+        // 2.5초: 텍스트 등장 (CSS에서 처리)
+        // 4.5초: 메인 화면으로 전환
+
+        setTimeout(() => {
+            const mainScreen = document.getElementById('mainScreen');
+            // 메인 화면 활성화 (Fade in)
+            mainScreen.classList.add('active');
+            
+            // 실제 앱에서는 이 부분에 메인 화면으로 이동하는 라우팅 코드를 넣으시면 됩니다.
+            // 예: window.location.href = '/main';
+        }, 4500); // 4.5초 후 메인 화면 전환
+    </script>
+
+</body>
+</html>

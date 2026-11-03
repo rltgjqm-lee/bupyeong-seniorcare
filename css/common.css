@@ -1,0 +1,269 @@
+:root {
+  --navy-950: #0f172a;
+  --navy-900: #1e293b;
+  --navy-850: #334155;
+  --navy-800: #475569;
+  --navy-700: #64748b;
+  --navy-600: #94a3b8;
+  --navy-500: #cbd5e1;
+  --navy-400: #e2e8f0;
+  --navy-300: #f1f5f9;
+  --navy-200: #f8fafc;
+  --navy-100: #f1f5f9;
+  --navy-50:  #f8fafc;
+  --navy-20:  #ffffff;
+
+  --c-text-primary:   #0f172a;
+  --c-text-secondary: #334155;
+  --c-text-muted:     #64748b;
+  --c-border:         #e2e8f0;
+  --c-border-subtle:  #f1f5f9;
+  --c-bg:             #ffffff;
+  --c-white:          #ffffff;
+
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body, button, input, select, textarea {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+body {
+  background: #ffffff;
+  color: var(--c-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TOP GLOBAL NAV (Clean White Flat) */
+.top-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  height: 52px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
+.top-nav-inner {
+  max-width: 520px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+@media screen and (min-width: 768px) {
+  .top-nav-inner {
+    max-width: 860px;
+    padding: 0 20px;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .top-nav-inner {
+    max-width: 1080px;
+    padding: 0 28px;
+  }
+}
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-title {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* UID & GRADE PILLS */
+.uid-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.grade-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+}
+.grade-pill.clean { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+.grade-pill.mid { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.grade-pill.high { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.grade-pill.critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* ========================================================
+   Common In-App Toast & Modal Notifications (notifier.js)
+   ======================================================== */
+.wrk-toast-container {
+  position: fixed;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.wrk-toast {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+  border: 1px solid #334155;
+  border-left: 3px solid #38bdf8;
+}
+.wrk-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.wrk-toast-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.wrk-toast-badge-info { background: #1e293b; color: #ffffff; }
+.wrk-toast-badge-success { background: #166534; color: #dcfce7; }
+.wrk-toast-badge-warning { background: #9a3412; color: #ffedd5; }
+.wrk-toast-badge-error { background: #991b1b; color: #fee2e2; }
+.wrk-toast-text {
+  flex: 1;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+/* Modal Alert */
+.wrk-modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.wrk-modal-container.active {
+  display: flex;
+}
+.wrk-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+}
+.wrk-modal-card {
+  position: relative;
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #cbd5e1;
+  overflow: hidden;
+  animation: wrkModalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes wrkModalPop {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.wrk-modal-header {
+  padding: 14px 18px;
+  background: #f8fafc;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+}
+.wrk-modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.wrk-modal-body {
+  padding: 18px;
+}
+.wrk-modal-desc {
+  margin: 0 0 14px 0;
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.5;
+}
+.wrk-modal-details {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wrk-modal-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.wrk-modal-detail-label {
+  color: #64748b;
+  font-weight: 600;
+}
+.wrk-modal-detail-val {
+  color: #0f172a;
+  font-weight: 700;
+  text-align: right;
+  max-width: 250px;
+  word-break: break-all;
+}
+.wrk-modal-footer {
+  padding: 12px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+.wrk-modal-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.wrk-modal-btn:hover {
+  background: #1e293b;
+}

@@ -91,7 +91,7 @@ export class Step3BasicSurveyView {
             <option value="" disabled ${!t.targetAttribute ? 'selected' : ''}>-- 대상자 특성 / 유형을 선택하여 주십시오 --</option>
             <option value="장기요양재가급여" ${t.targetAttribute === '장기요양재가급여' ? 'selected' : ''}>장기요양재가급여</option>
             <option value="노인맞춤돌봄서비스" ${t.targetAttribute === '노인맞춤돌봄서비스' ? 'selected' : ''}>노인맞춤돌봄서비스</option>
-            <option value="장애인활동보조" ${t.targetAttribute === '장애인활동보조' ? 'selected' : ''}>기타 (장애인활동보조)</option>
+            <option value="장애인활동보조 수급자" ${t.targetAttribute === '장애인활동보조 수급자' ? 'selected' : ''}>장애인활동보조 수급자</option>
             <option value="해당없음" ${t.targetAttribute === '해당없음' ? 'selected' : ''}>기타 (해당 없음)</option>
             <option value="기타" ${t.targetAttribute === '기타' ? 'selected' : ''}>기타</option>
           </select>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>부평구 통합돌봄 - 현장조사 PWA</title>
+<meta name="theme-color" content="#0f172a">
+
+<!-- iOS PWA 전용 메타 태그 및 전체화면 지원 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="통합돌봄">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="manifest" href="../manifest.json">
+<link rel="icon" type="image/png" href="../img/부평구.png">
+<link rel="apple-touch-icon" href="../img/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../img/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pwa.css">
+
+<!-- Daum / Kakao Postcode Address Search Service -->
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<!-- HTML2PDF A4 서식 PDF 변환 엔진 -->
+<script src="../lib/html2pdf.bundle.min.js"></script>
+<!-- ExcelJS 17열 엑셀 대장 생성 엔진 -->
+<script src="../lib/exceljs.min.js"></script>
+</head>
+<body>
+
+<!-- PWA 오프닝 인트로 스플래시 (부평구 감성 인트로) -->
+<div id="pwaIntroSplash" class="intro-splash-overlay" title="화면을 터치하면 건너뜁니다">
+  <div class="intro-stack">
+    <svg class="intro-heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+
+    <img src="../img/logo@4x.png" alt="부평구 로고 - 참여+나눔 더불어 사는 따뜻한 부평" class="intro-logo-img">
+
+    <p class="intro-text">
+      <span class="intro-highlight">통합돌봄서비스</span>
+      <span class="intro-sub">부평구가 함께합니다.</span>
+    </p>
+  </div>
+  <div class="intro-skip-hint">화면을 터치하면 건너뜁니다</div>
+</div>
+
+<!-- TOP NAV (게이트키퍼 표준 슬레이트 다크 헤더) -->
+<header class="top-nav">
+  <div class="top-nav-inner">
+    <div class="brand-title" style="font-size: 16px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px;">
+      <img src="../img/부평구.png" alt="부평구 로고" style="height: 26px; vertical-align: middle; object-fit: contain;">
+      <span>부평형 통합돌봄 안심살핌</span>
+    </div>
+    <div style="font-size: 11.5px; font-weight: 600; color: #64748b; font-family: monospace;" id="topNavOrgCode">O-28-237-01</div>
+  </div>
+</header>
+
+<main class="pwa-container">
+
+  <!-- 7-Step Mobile Progressive Navigation Tabs (게이트키퍼 완벽 일치) -->
+  <nav class="pwa-step-tabs" id="pwaStepTabs">
+    <button class="pwa-tab-item active" data-tab="1">
+      <span class="tab-num-badge">1</span><span class="tab-label">참여자</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="2">
+      <span class="tab-num-badge">2</span><span class="tab-label">대상자</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="3">
+      <span class="tab-num-badge">3</span><span class="tab-label" id="tabLabel3">기초조사</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="4">
+      <span class="tab-num-badge">4</span><span class="tab-label" id="tabLabel4">활동카드</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="5">
+      <span class="tab-num-badge">5</span><span class="tab-label" id="tabLabel5">모니터링</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="6">
+      <span class="tab-num-badge">6</span><span class="tab-label" id="tabLabel6">동의·서명</span>
+    </button>
+    <button class="pwa-tab-item upcoming" data-tab="7">
+      <span class="tab-num-badge">7</span><span class="tab-label" id="tabLabel7">저장·출력</span>
+    </button>
+  </nav>
+
+  <!-- STEP 1 VIEW: 소속 기관 & 참여 활동가 2인 조 편성 (순수 활동가 정보) -->
+  <section id="pwaSecStep1" class="pwa-view-section active">
+    <div id="step1Container"></div>
+  </section>
+
+  <!-- STEP 2 VIEW: 대상자 확인 및 현장 발굴 주소검색 (행정동 자동 추출) -->
+  <section id="pwaSecStep2" class="pwa-view-section">
+    <div id="step2Container"></div>
+  </section>
+
+  <!-- STEP 3 VIEW: ⭐ 활동관리카드 (차수별 방문일지 누적) -->
+  <section id="pwaSecStep3" class="pwa-view-section">
+    <div id="step3Container"></div>
+  </section>
+
+  <!-- STEP 4 VIEW: 정밀 모니터링 기록지 (상태평가 & 심층상담 연계의뢰) -->
+  <section id="pwaSecStep4" class="pwa-view-section">
+    <div id="step4Container"></div>
+  </section>
+
+  <!-- STEP 5 VIEW: 이용자 만족도 조사 (5점 척도 & 11대 피드백) -->
+  <section id="pwaSecStep5" class="pwa-view-section">
+    <div id="step5Container"></div>
+  </section>
+
+  <!-- STEP 6 VIEW: 개인정보 수집·제공 동의 및 전자서명 -->
+  <section id="pwaSecStep6" class="pwa-view-section">
+    <div id="step6Container"></div>
+  </section>
+
+  <!-- STEP 7 VIEW: 저장 및 A4 공공 PDF / 엑셀 다운로드 -->
+  <section id="pwaSecStep7" class="pwa-view-section">
+    <div id="step7Container"></div>
+  </section>
+
+</main>
+
+<!-- 카카오 우편번호 레이어 팝업 컨테이너 (모바일 바텀시트 규격) -->
+<div id="postcodeLayer" style="display:none;position:fixed;overflow:hidden;z-index:99999;-webkit-overflow-scrolling:touch;left:0;top:0;width:100%;height:100%;background:rgba(15,23,42,0.65);">
+  <div style="position:relative;width:100%;max-width:540px;height:100%;margin:0 auto;background:#ffffff;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f172a;color:#ffffff;">
+      <span style="font-weight:700;font-size:15px;">도로명 주소 검색 (부평구)</span>
+      <button type="button" id="closePostcodeBtn" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;padding:0 6px;">✕</button>
+    </div>
+    <div id="postcodeFrameContainer" style="flex:1;width:100%;height:100%;"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { BupyeongPwaView } from '../js/pwa/bupyeongPwaView.js';
+  window.addEventListener('DOMContentLoaded', () => {
+    const app = new BupyeongPwaView();
+    app.init();
+
+    // 인트로 스플래시 애니메이션 제어 (자동 4.0초 후 페이드아웃 또는 터치 시 즉시 건너뛰기)
+    const splash = document.getElementById('pwaIntroSplash');
+    if (splash) {
+      let closed = false;
+      const closeSplash = () => {
+        if (closed) return;
+        closed = true;
+        splash.classList.add('fade-out');
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 600);
+      };
+
+      splash.addEventListener('click', closeSplash);
+      splash.addEventListener('touchstart', closeSplash, { passive: true });
+      setTimeout(closeSplash, 4000);
+    }
+
+    // 서비스 워커(sw.js) 등록 (PWA 오프라인 캐싱 및 iOS/안드로이드 설치 지원)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('[PWA] Service Worker 등록 완료:', reg.scope))
+        .catch((err) => console.warn('[PWA] Service Worker 등록 실패:', err));
+    }
+  });
+</script>
+
+</body>
+</html>
