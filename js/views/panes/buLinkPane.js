@@ -8,6 +8,7 @@
  */
 
 import { notifier } from '../../utils/notifier.js';
+import { RbacService } from '../../services/rbacService.js';
 
 export const BU_LINK_SAMPLE_CASES = [
   {
@@ -108,7 +109,7 @@ export class BuLinkPane {
     this.container = null;
     this.cases = (options.cases && options.cases.length > 0) ? options.cases : BU_LINK_SAMPLE_CASES;
     this.currentBu = 'all';
-    this.isUidMasked = true; // 기본값: 관리번호 마스킹 적용 (C-**-***-**-K1001)
+    this.showUidColumn = true; // 기본값: 관리번호 열 표출 (보임)
     this.onViewDetail = options.onViewDetail || null;
     this.pagination = {
       currentPage: 1,
@@ -154,6 +155,7 @@ export class BuLinkPane {
     // 검색 인풋 및 셀렉트
     const searchInput = document.getElementById('inpBuLinkSearch');
     const statusSelect = document.getElementById('selBuLinkStatus');
+    const uidModeSelect = document.getElementById('selBuLinkUidMode');
     const resetBtn = document.getElementById('btnResetBuLinkFilter');
 
     if (searchInput) {
@@ -168,10 +170,18 @@ export class BuLinkPane {
         this.renderLinkTable();
       };
     }
+    if (uidModeSelect) {
+      uidModeSelect.onchange = () => {
+        this.showUidColumn = (uidModeSelect.value === 'show');
+        this.renderLinkTable();
+      };
+    }
     if (resetBtn) {
       resetBtn.onclick = () => {
         if (searchInput) searchInput.value = '';
         if (statusSelect) statusSelect.value = 'all';
+        if (uidModeSelect) uidModeSelect.value = 'show';
+        this.showUidColumn = true;
         this.currentBu = 'all';
         this.pagination.currentPage = 1;
         tabBtns.forEach((b, idx) => {
@@ -192,18 +202,6 @@ export class BuLinkPane {
     const btnAddBu = document.getElementById('btnAddBuModalBtn');
     if (btnAddBu) {
       btnAddBu.onclick = () => this.openAddBuModal();
-    }
-
-    // 관리번호 마스킹 숨김/보임 토글 버튼
-    const btnToggleMask = document.getElementById('btnToggleBuLinkMask');
-    if (btnToggleMask) {
-      btnToggleMask.onclick = () => {
-        this.isUidMasked = !this.isUidMasked;
-        btnToggleMask.textContent = this.isUidMasked ? '👁️' : '🔒';
-        btnToggleMask.title = this.isUidMasked ? '관리번호 마스킹 해제 (보임)' : '관리번호 마스킹 적용 (숨김)';
-        this.renderLinkTable();
-        notifier.toast(this.isUidMasked ? '관리번호가 마스킹 처리(숨김)되었습니다.' : '관리번호 마스킹이 해제(보임)되었습니다.', 'info');
-      };
     }
   }
 
@@ -272,13 +270,20 @@ export class BuLinkPane {
     const startIndex = (this.pagination.currentPage - 1) * pageSize;
     const paged = filtered.slice(startIndex, startIndex + pageSize);
 
+    // 관리번호 컬럼 헤더 표시/숨김 연동
+    const thUid = document.getElementById('thBuLinkUid');
+    if (thUid) {
+      thUid.style.display = this.showUidColumn ? '' : 'none';
+    }
+
     // 하단 페이지네이션 바 렌더링
     this.renderPagination(totalItems, totalPages);
 
     if (filtered.length === 0) {
+      const colSpan = this.showUidColumn ? 10 : 9;
       tbody.innerHTML = `
         <tr>
-          <td colspan="10" style="padding: 32px 0; color: #94a3b8; text-align: center;">
+          <td colspan="${colSpan}" style="padding: 32px 0; color: #94a3b8; text-align: center;">
             조건에 부합하는 사업단 매칭 안부대상자가 없습니다.
           </td>
         </tr>
@@ -308,9 +313,10 @@ export class BuLinkPane {
       if (status.includes('완료')) statusColor = '#16a34a';
       else if (status.includes('진행중')) statusColor = '#2563eb';
 
-      // 관리번호 마스킹 처리 (기본: 마스킹 C-**-***-**-K1001, 토글 시 원문)
+      // 관리번호 권한 연동 (읽기/쓰기 권한자만 원문, 그 외는 마스킹)
       let dispUid = c.uid;
-      if (this.isUidMasked && c.uid) {
+      const canReadWrite = RbacService.canWrite();
+      if (!canReadWrite && c.uid) {
         const parts = String(c.uid).split('-');
         if (parts.length >= 5) {
           dispUid = `${parts[0]}-**-***-**-${parts[4]}`;
@@ -319,10 +325,14 @@ export class BuLinkPane {
         }
       }
 
+      const uidCell = this.showUidColumn
+        ? `<td style="font-family: monospace; font-weight: 800; color: #0f172a;">${dispUid}</td>`
+        : '';
+
       return `
         <tr style="border-bottom: 1px solid #f1f5f9;">
           <td style="color: #64748b; font-weight: 700; text-align: center;">${startIndex + idx + 1}</td>
-          <td style="font-family: monospace; font-weight: 800; color: #0f172a;">${dispUid}</td>
+          ${uidCell}
           <td><strong>${c.name}</strong> <span style="font-size: 11px; color: #64748b;">(${c.gender}/${c.age}세)</span></td>
           <td>${gradeBadge}</td>
           <td>${buBadges}</td>

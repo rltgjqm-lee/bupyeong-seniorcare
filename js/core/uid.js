@@ -80,6 +80,34 @@ export class UidEngine {
   }
 
   /**
+   * 정규 선별조사(S-GDS, 고독사위험도) 서식 UID 생성 (S-계층): S-{C-UID(접두사제외)}-{BU코드}-R{차수}
+   * @param {string} caseUid (예: C-28-237-01-K1001)
+   * @param {string} buCode ('GD', 'WR', 'ME', 'HE', 'CL', 'EM')
+   * @param {number} round (1, 2, 3...)
+   * @returns {string} 예: S-28-237-01-K1001-GD-R1
+   */
+  static generateSurveyUid(caseUid, buCode = 'GD', round = 1) {
+    if (!caseUid || !caseUid.startsWith('C-')) {
+      return `S-28-237-01-00001-${buCode}-R${round}`;
+    }
+    const cleanBu = (buCode || 'GD').trim().toUpperCase();
+    return `S-${caseUid.slice(2)}-${cleanBu}-R${round}`;
+  }
+
+  /**
+   * 상담 관리카드 서식 UID 생성 (CD-계층): {C-UID}-CD-R{차수}
+   * @param {string} caseUid (예: C-28-237-01-K1001)
+   * @param {number} round (1, 2, 3...)
+   * @returns {string} 예: C-28-237-01-K1001-CD-R1
+   */
+  static generateCounselCardUid(caseUid, round = 1) {
+    if (!caseUid || !caseUid.startsWith('C-')) {
+      return `C-28-237-01-00001-CD-R${round}`;
+    }
+    return `${caseUid}-CD-R${round}`;
+  }
+
+  /**
    * 활동관리카드/모니터링 차수 UID 생성: CRD-{C-UID}-{차수2자리}
    */
   static generateCardUid(caseUid, round = 1) {

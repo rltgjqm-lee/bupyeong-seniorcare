@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file adminsPane.js
  * @description 부관리자(실무 담당자) 계정 및 RBAC 권한 관리 서브 페인 모듈 (ESM)
  *              - 부관리자 계정 목록 렌더링 및 상태(활동중/중지) 관리
@@ -107,12 +107,24 @@ export class AdminsPane {
         ? `<span class="sidebar-badge" style="background:#fee2e2; color:#b91c1c; font-size:10px; margin-left:3px; padding:2px 5px;" title="개인정보 마스킹 해제 허용">마스킹해제</span>`
         : '';
 
+      const buMap = {
+        'ALL': '전체총괄',
+        'ME': '식사지원 (ME)',
+        'HE': '건강의료 (HE)',
+        'CL': '주거개선 (CL)',
+        'EM': '정서이웃 (EM)'
+      };
+      const buCode = a.assigned_bu_code || a.bu_code || 'ALL';
+      const buBadge = buCode !== 'ALL'
+        ? `<span class="sidebar-badge" style="background:#e0f2fe; color:#0369a1; font-weight:700; margin-left:4px; font-size:10.5px;">${buMap[buCode] || buCode}</span>`
+        : `<span class="sidebar-badge" style="background:#f1f5f9; color:#475569; margin-left:4px; font-size:10.5px;">총괄</span>`;
+
       return `
         <tr>
           <td style="text-align: center;">${idx + 1}</td>
           <td style="font-family: monospace; font-size: 11.5px; color: #475569;">${a.uid}</td>
           <td><strong>${a.name}</strong></td>
-          <td>${a.position || a.role || '-'}${a.department ? ` (${a.department})` : ''}</td>
+          <td>${a.position || a.role || '-'}${buBadge}${a.department ? ` (${a.department})` : ''}</td>
           <td style="font-size: 12px; color: #475569;">${a.login_id || a.loginId || '-'}</td>
           <td>${a.phone}</td>
           <td style="text-align: center; white-space: nowrap;">${permBadge}${canExportBadge}${canUnmaskBadge}</td>
@@ -195,6 +207,8 @@ export class AdminsPane {
         inpLoginId.value = target.login_id || target.loginId || '';
         inpLoginId.disabled = true;
       }
+      const selBu = document.getElementById('selNewAdminBu');
+      if (selBu) selBu.value = target.assigned_bu_code || target.bu_code || 'ALL';
 
       // 권한 라디오 바인딩
       const perm = target.permissions || PermissionType.READ_WRITE;
@@ -304,6 +318,8 @@ export class AdminsPane {
         const canExportExcel = document.getElementById('chkAdminCanExport')?.checked ? 1 : 0;
         const canUnmask = document.getElementById('chkAdminCanUnmask')?.checked ? 1 : 0;
 
+        const assignedBu = document.getElementById('selNewAdminBu')?.value || 'ALL';
+
         if (!name || !phone) {
           notifier.toast('관리자 성명과 연락처는 필수 입력 항목입니다.', 'warning');
           return;
@@ -317,6 +333,7 @@ export class AdminsPane {
             target.position = role;
             target.department = dept;
             target.phone = phone;
+            target.assigned_bu_code = assignedBu;
             target.permissions = permissions;
             target.can_export_excel = canExportExcel;
             target.can_unmask = canUnmask;
@@ -331,6 +348,7 @@ export class AdminsPane {
                 position: role,
                 department: dept,
                 phone,
+                assigned_bu_code: assignedBu,
                 permissions,
                 can_export_excel: canExportExcel,
                 can_unmask: canUnmask,
@@ -362,6 +380,7 @@ export class AdminsPane {
             position: role,
             department: dept,
             phone,
+            assigned_bu_code: assignedBu,
             permissions,
             can_export_excel: canExportExcel,
             can_unmask: canUnmask,

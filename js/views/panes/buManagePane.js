@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file buManagePane.js
  * @description 3-2. 사업단별 관리 서브 페인 모듈 (ESM)
  *              - 상단 사업단 버튼 선택식 인터페이스
@@ -66,7 +66,7 @@ export class BuManagePane {
     this.cases = options.cases || [];
     this.buList = JSON.parse(localStorage.getItem('wrk_bu_list') || 'null') || INITIAL_BUSINESS_UNITS;
     this.activeBuCode = this.buList[0]?.code || 'ME';
-    this.activeSubtab = 'edit'; // 'edit' | 'workers' | 'schedule'
+    this.activeSubtab = 'edit'; // 'edit' | 'admins' | 'workers' | 'schedule'
     this.inspectors = [];
   }
 
@@ -125,13 +125,21 @@ export class BuManagePane {
     const btnCloseBu = document.getElementById('btnCloseBuModal');
     const btnCancelBu = document.getElementById('btnCancelBuModal');
     const btnSaveBu = document.getElementById('btnSaveBu');
+    const selBuCategory = document.getElementById('selBuCategory');
+    const inpBuCategoryCustom = document.getElementById('inpBuCategoryCustom');
 
     if (btnCloseBu) btnCloseBu.onclick = () => this.closeBuModal();
     if (btnCancelBu) btnCancelBu.onclick = () => this.closeBuModal();
     if (btnSaveBu) btnSaveBu.onclick = () => this.saveNewBuFromModal();
+    if (selBuCategory && inpBuCategoryCustom) {
+      selBuCategory.onchange = () => {
+        inpBuCategoryCustom.style.display = selBuCategory.value === 'custom' ? 'block' : 'none';
+        if (selBuCategory.value === 'custom') inpBuCategoryCustom.focus();
+      };
+    }
 
     // 2. 하위 메뉴 탭 버튼 클릭 이벤트 바인딩
-    ['edit', 'workers', 'schedule'].forEach(subtab => {
+    ['edit', 'admins', 'workers', 'schedule'].forEach(subtab => {
       const btn = document.getElementById(`subtabBu${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       if (btn) {
         btn.onclick = () => {
@@ -148,6 +156,8 @@ export class BuManagePane {
 
     if (this.activeSubtab === 'edit') {
       this.renderEditSubpane();
+    } else if (this.activeSubtab === 'admins') {
+      this.renderAdminsSubpane();
     } else if (this.activeSubtab === 'workers') {
       this.renderWorkersSubpane();
     } else if (this.activeSubtab === 'schedule') {
@@ -187,7 +197,7 @@ export class BuManagePane {
    * 2. 하위 메뉴 탭 상태 동기화
    */
   renderSubmenuTabs() {
-    ['edit', 'workers', 'schedule'].forEach(subtab => {
+    ['edit', 'admins', 'workers', 'schedule'].forEach(subtab => {
       const btn = document.getElementById(`subtabBu${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       const pane = document.getElementById(`buSubpane${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       const isActive = this.activeSubtab === subtab;
@@ -246,8 +256,12 @@ export class BuManagePane {
               <option value="건강의료" ${bu.category === '건강의료' ? 'selected' : ''}>건강의료 (방문간호·복약지도)</option>
               <option value="주거개선" ${bu.category === '주거개선' ? 'selected' : ''}>주거개선 (방역·청소·세탁)</option>
               <option value="정서이웃" ${bu.category === '정서이웃' ? 'selected' : ''}>정서이웃 (말벗·안심이웃)</option>
-              <option value="기타돌봄" ${bu.category === '기타돌봄' ? 'selected' : ''}>기타 특화돌봄</option>
+              <option value="이동동행" ${bu.category === '이동동행' ? 'selected' : ''}>이동동행 (병원동행·외출지원)</option>
+              <option value="안전관리" ${bu.category === '안전관리' ? 'selected' : ''}>안전관리 (스마트센서·안심콜)</option>
+              ${(!['식사지원', '건강의료', '주거개선', '정서이웃', '이동동행', '안전관리'].includes(bu.category) && bu.category) ? `<option value="${bu.category}" selected>${bu.category} (특화 분류)</option>` : ''}
+              <option value="custom">+ 직접 입력 (신규 특화 분류)</option>
             </select>
+            <input type="text" class="filter-ctrl" id="inpEditBuCategoryCustom" placeholder="신규 서비스 분류명 입력" style="display: none; width: 100%; height: 34px; margin-top: 6px; border-radius: 4px;">
           </div>
           <div>
             <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">전담 매니저(담당자)</label>
@@ -275,11 +289,22 @@ export class BuManagePane {
       </div>
     `;
 
+    const selEditCat = document.getElementById('selEditBuCategory');
+    const inpEditCustom = document.getElementById('inpEditBuCategoryCustom');
+    if (selEditCat && inpEditCustom) {
+      selEditCat.onchange = () => {
+        inpEditCustom.style.display = selEditCat.value === 'custom' ? 'block' : 'none';
+        if (selEditCat.value === 'custom') inpEditCustom.focus();
+      };
+    }
+
     const btnSave = document.getElementById('btnSaveBuEditForm');
     if (btnSave) {
       btnSave.onclick = () => {
         const name = document.getElementById('inpEditBuName')?.value.trim();
-        const category = document.getElementById('selEditBuCategory')?.value;
+        const selCatVal = document.getElementById('selEditBuCategory')?.value;
+        const customCatVal = document.getElementById('inpEditBuCategoryCustom')?.value.trim();
+        const category = (selCatVal === 'custom') ? (customCatVal || '기타 특화돌봄') : selCatVal;
         const manager = document.getElementById('inpEditBuManager')?.value.trim();
         const phone = document.getElementById('inpEditBuPhone')?.value.trim();
         const quota = parseInt(document.getElementById('inpEditBuTargetQuota')?.value || '50', 10);
@@ -302,6 +327,168 @@ export class BuManagePane {
         this.renderBuButtons();
       };
     }
+  }
+
+  /**
+   * 3-2. 하위 2: 관리자추가 (사업단 전담 부관리자 목록 및 신규 배정)
+   */
+  renderAdminsSubpane() {
+    const pane = document.getElementById('buSubpaneAdmins');
+    if (!pane) return;
+
+    const bu = this.getActiveBu();
+    if (!bu) return;
+
+    // 기관 부관리자 목록 조회
+    const allAdmins = window.admin?.adminsPane?.admins || [
+      {
+        uid: 'A-28-237-01-01',
+        login_id: 'sub_a282370101@wellrisk.kr',
+        name: '김살핌',
+        position: '총괄 슈퍼바이저',
+        department: '통합돌봄사례관리팀',
+        phone: '032-560-4001',
+        assigned_bu_code: 'ALL',
+        permissions: 'READ_WRITE',
+        status: '활동중'
+      },
+      {
+        uid: 'A-28-237-01-02',
+        login_id: 'sub_a282370102@wellrisk.kr',
+        name: '이살핌',
+        position: '현장 배차 주임',
+        department: '식사지원팀',
+        phone: '032-560-4002',
+        assigned_bu_code: 'ME',
+        permissions: 'READ_WRITE',
+        status: '활동중'
+      }
+    ];
+
+    // 현재 사업단 담당 관리자 필터 (해당 사업단 코드 or ALL)
+    const buAdmins = allAdmins.filter(a => {
+      const code = a.assigned_bu_code || a.bu_code || 'ALL';
+      return code === bu.code || code === 'ALL';
+    });
+
+    pane.innerHTML = `
+      <div class="pwa-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">
+              ${bu.name} 전담 관리자 및 실무 담당자 목록
+            </h3>
+            <p style="font-size: 12px; color: #64748b; margin: 0;">
+              본 사업단 소속 안부대상자 및 살핌 활동가에 대한 읽기/쓰기 권한을 보유한 담당자 계정입니다.
+            </p>
+          </div>
+          <button type="button" class="btn-action primary" id="btnAddAdminForThisBu" style="font-size: 12.5px; padding: 7px 16px; font-weight: 700;">
+            + ${bu.name} 전담 관리자 추가
+          </button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">순번</th>
+                <th style="width: 140px;">관리자 식별자</th>
+                <th style="width: 110px;">성명</th>
+                <th style="width: 140px;">직책 / 부서</th>
+                <th>로그인 ID</th>
+                <th style="width: 120px;">연락처</th>
+                <th style="width: 110px;">실무 권한</th>
+                <th style="width: 110px;">담당 범위</th>
+                <th style="width: 70px;">상태</th>
+                <th style="width: 100px;">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${buAdmins.length === 0 ? `
+                <tr>
+                  <td colspan="10" style="text-align: center; color: #94a3b8; padding: 32px 0;">
+                    등록된 [${bu.name}] 전담 관리자가 없습니다. 우측 상단 버튼을 눌러 담당 사회복지사 또는 실무자를 등록해 주십시오.
+                  </td>
+                </tr>
+              ` : buAdmins.map((a, idx) => {
+                const code = a.assigned_bu_code || 'ALL';
+                const isDedicated = code === bu.code;
+                const scopeBadge = isDedicated 
+                  ? `<span class="sidebar-badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">${bu.name} 전담</span>`
+                  : `<span class="sidebar-badge" style="background:#f1f5f9; color:#475569;">기관 전체 총괄</span>`;
+                
+                const perm = a.permissions || 'READ_WRITE';
+                const permBadge = perm === 'READ'
+                  ? `<span class="sidebar-badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">읽기 전용</span>`
+                  : `<span class="sidebar-badge" style="background:#ecfdf5; color:#047857; font-weight:700;">읽기+쓰기</span>`;
+
+                return `
+                  <tr>
+                    <td style="text-align: center; color: #64748b; font-weight: 700;">${idx + 1}</td>
+                    <td style="font-family: monospace; font-size: 11.5px; color: #475569;">${a.uid}</td>
+                    <td><strong>${a.name}</strong></td>
+                    <td>${a.position || a.role || '-'}${a.department ? ` (${a.department})` : ''}</td>
+                    <td style="font-size: 12px; color: #475569;">${a.login_id || a.loginId || '-'}</td>
+                    <td>${a.phone || '-'}</td>
+                    <td style="text-align: center;">${permBadge}</td>
+                    <td style="text-align: center;">${scopeBadge}</td>
+                    <td style="text-align: center;"><span class="grade-pill clean">${a.status || '활동중'}</span></td>
+                    <td style="text-align: center;">
+                      <button type="button" class="btn-table-sm" data-edit-bu-admin="${a.uid}">수정</button>
+                      <button type="button" class="btn-table-sm" data-del-bu-admin="${a.uid}" style="color:#dc2626; border-color:#fca5a5;">삭제</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    // 이벤트 바인딩
+    const btnAdd = document.getElementById('btnAddAdminForThisBu');
+    if (btnAdd) {
+      btnAdd.onclick = () => {
+        if (window.admin?.adminsPane) {
+          window.admin.adminsPane.openAdminModal(null);
+          const selBu = document.getElementById('selNewAdminBu');
+          if (selBu) selBu.value = bu.code;
+          const inpRole = document.getElementById('inpNewAdminRole');
+          if (inpRole && !inpRole.value) inpRole.value = `${bu.name} 전담 매니저`;
+          const inpDept = document.getElementById('inpNewAdminDept');
+          if (inpDept && !inpDept.value) inpDept.value = bu.name;
+        } else {
+          notifier.toast('관리자 등록 모달을 로드할 수 없습니다.', 'warning');
+        }
+      };
+    }
+
+    // 수정 버튼
+    pane.querySelectorAll('button[data-edit-bu-admin]').forEach(btn => {
+      btn.onclick = () => {
+        const uid = btn.dataset.editBuAdmin;
+        const target = allAdmins.find(a => a.uid === uid);
+        if (target && window.admin?.adminsPane) {
+          window.admin.adminsPane.openAdminModal(target);
+        }
+      };
+    });
+
+    // 삭제 버튼
+    pane.querySelectorAll('button[data-del-bu-admin]').forEach(btn => {
+      btn.onclick = () => {
+        const uid = btn.dataset.delBuAdmin;
+        if (confirm(`해당 관리자 계정(${uid})을 정말 삭제하시겠습니까?`)) {
+          if (window.admin?.adminsPane) {
+            window.admin.adminsPane.admins = window.admin.adminsPane.admins.filter(a => a.uid !== uid);
+            window.admin.adminsPane.renderAdmins();
+            this.renderAdminsSubpane();
+            notifier.toast('관리자 계정이 성공적으로 삭제되었습니다.', 'info');
+          }
+        }
+      };
+    });
   }
 
   /**
@@ -721,6 +908,8 @@ export class BuManagePane {
     const editIdx = document.getElementById('editBuIndex');
     const inpName = document.getElementById('inpBuName');
     const inpCode = document.getElementById('inpBuCode');
+    const selCategory = document.getElementById('selBuCategory');
+    const inpCategoryCustom = document.getElementById('inpBuCategoryCustom');
     const inpManager = document.getElementById('inpBuManager');
     const inpPhone = document.getElementById('inpBuPhone');
     const inpQuota = document.getElementById('inpBuTargetQuota');
@@ -730,6 +919,8 @@ export class BuManagePane {
     if (editIdx) editIdx.value = '-1';
     if (inpName) inpName.value = '';
     if (inpCode) { inpCode.value = ''; inpCode.disabled = false; }
+    if (selCategory) selCategory.value = '식사지원';
+    if (inpCategoryCustom) { inpCategoryCustom.value = ''; inpCategoryCustom.style.display = 'none'; }
     if (inpManager) inpManager.value = '';
     if (inpPhone) inpPhone.value = '';
     if (inpQuota) inpQuota.value = '50';
@@ -746,7 +937,9 @@ export class BuManagePane {
   saveNewBuFromModal() {
     const name = document.getElementById('inpBuName')?.value.trim();
     const code = document.getElementById('inpBuCode')?.value.trim().toUpperCase();
-    const category = document.getElementById('selBuCategory')?.value || '기타돌봄';
+    const selCatVal = document.getElementById('selBuCategory')?.value || '기타돌봄';
+    const customCatVal = document.getElementById('inpBuCategoryCustom')?.value.trim();
+    const category = (selCatVal === 'custom') ? (customCatVal || '기타 특화돌봄') : selCatVal;
     const manager = document.getElementById('inpBuManager')?.value.trim();
     const phone = document.getElementById('inpBuPhone')?.value.trim();
     const targetQuota = parseInt(document.getElementById('inpBuTargetQuota')?.value || '50', 10);
