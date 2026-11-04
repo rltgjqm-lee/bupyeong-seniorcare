@@ -136,7 +136,7 @@
 </div>
 
 <script type="module">
-  import { BupyeongPwaView } from '../js/pwa/bupyeongPwaView.js';
+  import { BupyeongPwaView } from '../js/pwa/bupyeongPwaView.js?v=3.7.0';
   window.addEventListener('DOMContentLoaded', () => {
     const app = new BupyeongPwaView();
     app.init();
@@ -159,11 +159,25 @@
       setTimeout(closeSplash, 4000);
     }
 
-    // 서비스 워커(sw.js) 등록 (PWA 오프라인 캐싱 및 iOS/안드로이드 설치 지원)
+    // 서비스 워커(sw.js) 등록 및 PWA 자동 갱신 리스너 (모바일 홈화면 PWA 즉각 갱신 지원)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('[PWA] Service Worker 등록 완료:', reg.scope))
+      navigator.serviceWorker.register('/sw.js?v=3.7.0')
+        .then((reg) => {
+          console.log('[PWA] Service Worker 등록 완료:', reg.scope);
+          // 모바일 PWA 접속 시 백그라운드에서 최신 서비스워커 변경 즉각 검사
+          reg.update().catch(() => {});
+        })
         .catch((err) => console.warn('[PWA] Service Worker 등록 실패:', err));
+
+      // 새 서비스 워커가 활성화(clients.claim)되면 앱 화면을 최신 버전으로 자동 새로고침
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          console.log('[PWA] 새 버전 감지: 최신 소스로 자동 새로고침합니다.');
+          window.location.reload();
+        }
+      });
     }
   });
 </script>

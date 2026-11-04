@@ -10,14 +10,14 @@ import { maskUid } from '../core/mask.js';
 import { notifier } from '../utils/notifier.js';
 import { getLocalTodayString } from '../utils/date.js';
 
-import { Step1BasicView } from './steps/step1BasicView.js';
-import { Step2TargetView } from './steps/step2TargetView.js';
-import { Step3BasicSurveyView } from './steps/step3BasicSurveyView.js';
-import { Step3ActivityCardView } from './steps/step3ActivityCardView.js';
-import { Step4MonitoringView } from './steps/step4MonitoringView.js';
-import { Step5SatisfactionView } from './steps/step5SatisfactionView.js';
-import { Step6ConsentView } from './steps/step6ConsentView.js';
-import { Step7CompleteView } from './steps/step7CompleteView.js';
+import { Step1BasicView } from './steps/step1BasicView.js?v=3.7.0';
+import { Step2TargetView } from './steps/step2TargetView.js?v=3.7.0';
+import { Step3BasicSurveyView } from './steps/step3BasicSurveyView.js?v=3.7.0';
+import { Step3ActivityCardView } from './steps/step3ActivityCardView.js?v=3.7.0';
+import { Step4MonitoringView } from './steps/step4MonitoringView.js?v=3.7.0';
+import { Step5SatisfactionView } from './steps/step5SatisfactionView.js?v=3.7.0';
+import { Step6ConsentView } from './steps/step6ConsentView.js?v=3.7.0';
+import { Step7CompleteView } from './steps/step7CompleteView.js?v=3.7.0';
 
 const STORAGE_KEY_BASIC = 'bupyeong_last_basic_info';
 

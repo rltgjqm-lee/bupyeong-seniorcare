@@ -105,7 +105,15 @@ export class Step1BasicView {
 
     if (inputDate) {
       inputDate.addEventListener('change', (e) => {
-        b.inspectionDate = e.target.value;
+        const todayStr = getLocalTodayString();
+        const selectedDate = e.target.value;
+        if (selectedDate > todayStr) {
+          notifier.toast('조사 일자는 미래 날짜를 지정할 수 없습니다. 오늘 일자로 재설정됩니다.', 'warning');
+          b.inspectionDate = todayStr;
+          inputDate.value = todayStr;
+        } else {
+          b.inspectionDate = selectedDate;
+        }
         this.mediator.updateSurveyUid();
         const numInput = document.getElementById('inputInspectionNumber');
         if (numInput) numInput.value = b.maskedSurveyUid;
