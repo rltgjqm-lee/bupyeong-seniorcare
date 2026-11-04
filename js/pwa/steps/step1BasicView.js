@@ -63,7 +63,7 @@ export class Step1BasicView {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <div class="form-group">
             <label class="form-label" for="inputInspectionDate">활동 일자 <span class="req">*</span></label>
-            <input type="date" class="form-input" id="inputInspectionDate" value="${b.inspectionDate}">
+            <input type="date" class="form-input" id="inputInspectionDate" value="${b.inspectionDate}" max="${getLocalTodayString()}">
           </div>
           <div class="form-group">
             <label class="form-label" for="inputInspectionNumber">서식 관리번호</label>

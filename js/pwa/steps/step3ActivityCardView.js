@@ -35,7 +35,7 @@ export class Step3ActivityCardView {
     const today = getLocalTodayString();
 
     // 기본 날짜 및 시간 세팅
-    if (!cur.date) cur.date = today;
+    if (!cur.date || cur.date > today) cur.date = today;
     if (!cur.startTime) cur.startTime = getLocalTimeString();
     if (!cur.endTime) {
       // 시작 시간 30분 뒤 기본값
@@ -96,10 +96,13 @@ export class Step3ActivityCardView {
           <span class="card-main-title">당일 활동 등록 (제 ${nextRound} 회차)</span>
         </div>
 
-        <!-- 활동 날짜 -->
+        <!-- 활동 날짜 (미래 날짜 원천 차단) -->
         <div class="form-group" style="margin-bottom: 12px;">
           <label class="form-label" for="inputActDate">활동 날짜 <span class="req">*</span></label>
-          <input type="date" class="form-input" id="inputActDate" value="${cur.date}" style="font-size: 13.5px; height: 40px;">
+          <input type="date" class="form-input" id="inputActDate" value="${cur.date}" max="${today}" style="font-size: 13.5px; height: 40px;">
+          <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+            * 오늘(${today}) 이전 날짜만 등록 가능합니다 (미래 날짜 불가).
+          </div>
         </div>
 
         <!-- 활동 시간 (시작 ~ 종료 근태관리 연동) -->
@@ -195,11 +198,18 @@ export class Step3ActivityCardView {
     const cur = a.currentEntry;
     const today = getLocalTodayString();
 
-    // 날짜 바인딩
+    // 날짜 바인딩 (미래 날짜 방어)
     const dateEl = document.getElementById('inputActDate');
     if (dateEl) {
       dateEl.addEventListener('change', (e) => {
-        cur.date = e.target.value;
+        const val = e.target.value;
+        if (val > today) {
+          notifier.toast('미래 날짜는 등록할 수 없습니다. 오늘 날짜로 재설정됩니다.', 'warning');
+          cur.date = today;
+          dateEl.value = today;
+        } else {
+          cur.date = val;
+        }
       });
     }
 

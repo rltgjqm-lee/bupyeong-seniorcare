@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file buLinkPane.js
  * @description 3-1. 사업단별 연계 서브 페인 모듈 (ESM)
  *              - 사업단별 대상자 개인 매칭 현황 표출
@@ -108,6 +108,7 @@ export class BuLinkPane {
     this.container = null;
     this.cases = (options.cases && options.cases.length > 0) ? options.cases : BU_LINK_SAMPLE_CASES;
     this.currentBu = 'all';
+    this.isUidMasked = true; // 기본값: 관리번호 마스킹 적용 (C-**-***-**-K1001)
     this.onViewDetail = options.onViewDetail || null;
     this.pagination = {
       currentPage: 1,
@@ -192,6 +193,18 @@ export class BuLinkPane {
     if (btnAddBu) {
       btnAddBu.onclick = () => this.openAddBuModal();
     }
+
+    // 관리번호 마스킹 숨김/보임 토글 버튼
+    const btnToggleMask = document.getElementById('btnToggleBuLinkMask');
+    if (btnToggleMask) {
+      btnToggleMask.onclick = () => {
+        this.isUidMasked = !this.isUidMasked;
+        btnToggleMask.textContent = this.isUidMasked ? '👁️' : '🔒';
+        btnToggleMask.title = this.isUidMasked ? '관리번호 마스킹 해제 (보임)' : '관리번호 마스킹 적용 (숨김)';
+        this.renderLinkTable();
+        notifier.toast(this.isUidMasked ? '관리번호가 마스킹 처리(숨김)되었습니다.' : '관리번호 마스킹이 해제(보임)되었습니다.', 'info');
+      };
+    }
   }
 
   openAddBuModal() {
@@ -234,9 +247,12 @@ export class BuLinkPane {
       });
     }
 
-    // 진행상태 필터
+    // 진행상태 필터 (완료, 진행중, 대기 정규화 매칭)
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(c => (c.status || '배정 대기') === statusFilter);
+      filtered = filtered.filter(c => {
+        const st = (c.status || '대기').trim();
+        return st.includes(statusFilter);
+      });
     }
 
     // 검색어 필터 (성명, 관리번호)
@@ -289,13 +305,24 @@ export class BuLinkPane {
 
       const status = c.status || '배정 대기';
       let statusColor = '#64748b';
-      if (status === '배정 완료') statusColor = '#16a34a';
-      else if (status === '서비스 진행중') statusColor = '#2563eb';
+      if (status.includes('완료')) statusColor = '#16a34a';
+      else if (status.includes('진행중')) statusColor = '#2563eb';
+
+      // 관리번호 마스킹 처리 (기본: 마스킹 C-**-***-**-K1001, 토글 시 원문)
+      let dispUid = c.uid;
+      if (this.isUidMasked && c.uid) {
+        const parts = String(c.uid).split('-');
+        if (parts.length >= 5) {
+          dispUid = `${parts[0]}-**-***-**-${parts[4]}`;
+        } else {
+          dispUid = 'C-**-***-**-****';
+        }
+      }
 
       return `
         <tr style="border-bottom: 1px solid #f1f5f9;">
           <td style="color: #64748b; font-weight: 700; text-align: center;">${startIndex + idx + 1}</td>
-          <td style="font-family: monospace; font-weight: 800; color: #0f172a;">${c.uid}</td>
+          <td style="font-family: monospace; font-weight: 800; color: #0f172a;">${dispUid}</td>
           <td><strong>${c.name}</strong> <span style="font-size: 11px; color: #64748b;">(${c.gender}/${c.age}세)</span></td>
           <td>${gradeBadge}</td>
           <td>${buBadges}</td>

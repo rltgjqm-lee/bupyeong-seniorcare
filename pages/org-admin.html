@@ -727,9 +727,9 @@
             <span>진행상태:</span>
             <select class="filter-ctrl" id="selBuLinkStatus">
               <option value="all">전체 상태</option>
-              <option value="배정 대기">배정 대기</option>
-              <option value="서비스 진행중">서비스 진행중</option>
-              <option value="배정 완료">배정 완료</option>
+              <option value="완료">완료 (배정/조사)</option>
+              <option value="진행중">서비스 진행중</option>
+              <option value="대기">배정 대기</option>
             </select>
           </div>
           <button type="button" class="btn-action secondary" id="btnResetBuLinkFilter" style="margin-left: auto;">초기화</button>
@@ -741,7 +741,10 @@
             <thead>
               <tr>
                 <th style="width: 50px;">순번</th>
-                <th style="width: 140px;">관리번호</th>
+                <th style="width: 160px;">
+                  <span>관리번호</span>
+                  <button type="button" id="btnToggleBuLinkMask" title="관리번호 마스킹 숨김/보임 전환" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; padding:1px 5px; font-size:11px; cursor:pointer; margin-left:4px; color:#475569;">👁️</button>
+                </th>
                 <th style="width: 130px;">대상자 (성별/연령)</th>
                 <th style="width: 80px;">위기등급</th>
                 <th style="width: 110px;">연계 사업단</th>
