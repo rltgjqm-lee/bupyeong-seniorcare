@@ -45,11 +45,6 @@ export class ValidationService {
       return { isValid: false, message: '조사 일자를 올바르게 지정해 주십시오.' };
     }
 
-    const todayStr = getLocalTodayString();
-    if (basicInfo.inspectionDate > todayStr) {
-      return { isValid: false, message: '조사 일자는 오늘 또는 과거 날짜만 지정할 수 있습니다. 미래 날짜는 등록할 수 없습니다.' };
-    }
-
     const inspVal = this.validateInspectors(basicInfo.inspectors);
     if (!inspVal.isValid) {
       return inspVal;
