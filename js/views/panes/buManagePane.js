@@ -1328,16 +1328,18 @@ export class BuManagePane {
     }
 
     container.innerHTML = `
-      <div style="font-size: 12px; color: #64748b; font-weight: 600;">
-        전체 ${totalItems}건 중 ${startNum}-${endNum}건 표시
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <select id="selBuActPageSize" class="filter-ctrl" style="height: 28px; font-size: 11.5px; padding: 2px 6px;">
-          <option value="10" ${pageSize === 10 ? 'selected' : ''}>10개씩 보기</option>
-          <option value="20" ${pageSize === 20 ? 'selected' : ''}>20개씩 보기</option>
-          <option value="50" ${pageSize === 50 ? 'selected' : ''}>50개씩 보기</option>
-        </select>
-        <div style="display: flex; align-items: center; gap: 3px;">
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 38px;">
+        <div style="position: absolute; left: 0; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 12px; color: #64748b; font-weight: 600;">
+            전체 ${totalItems}건 중 ${startNum}-${endNum}건 표시
+          </span>
+          <select id="selBuActPageSize" class="filter-ctrl" style="height: 28px; font-size: 11.5px; padding: 2px 6px;">
+            <option value="10" ${pageSize === 10 ? 'selected' : ''}>10개씩 보기</option>
+            <option value="20" ${pageSize === 20 ? 'selected' : ''}>20개씩 보기</option>
+            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50개씩 보기</option>
+          </select>
+        </div>
+        <div class="table-pagination-nav" style="display: flex; align-items: center; gap: 4px;">
           <button type="button" class="page-btn" id="btnActPageFirst" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">«</button>
           <button type="button" class="page-btn" id="btnActPagePrev" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">‹</button>
           ${pageButtons.join('')}

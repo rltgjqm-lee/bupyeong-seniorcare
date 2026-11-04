@@ -5,7 +5,7 @@
  * - Network-First with Cache Fallback 전략 (실시간 최신 버전 유지 + 오프라인 즉시 구동)
  */
 
-const CACHE_NAME = 'bupyeong-seniorcare-v3.8.2';
+const CACHE_NAME = 'bupyeong-seniorcare-v3.8.3';
 
 // 핵심 정적 자산 프리캐시 목록
 const PRECACHE_ASSETS = [
