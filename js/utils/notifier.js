@@ -1,6 +1,6 @@
 /**
  * @file notifier.js
- * @description 브라우저 네이티브 alert/confirm을 대체하는 슬레이트 톤앤매너 인앱 토스트 및 모달 알림 모듈 (ESM)
+ * @description 브라우저 네이티브 alert()을 대체하는 인앱 토스트 및 모달 알림 모듈 (ESM)
  */
 
 class Notifier {
@@ -12,25 +12,12 @@ class Notifier {
 
   initContainers() {
     if (typeof document === 'undefined') return;
-
     // 1. Toast Container
-    let toastBox = document.getElementById('bupyeongToastContainer');
+    let toastBox = document.getElementById('wrkToastContainer');
     if (!toastBox) {
       toastBox = document.createElement('div');
-      toastBox.id = 'bupyeongToastContainer';
-      toastBox.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 99999;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        pointer-events: none;
-        max-width: 90vw;
-        width: 380px;
-      `;
+      toastBox.id = 'wrkToastContainer';
+      toastBox.className = 'wrk-toast-container';
       document.body.appendChild(toastBox);
     }
     this.toastContainer = toastBox;
@@ -47,63 +34,57 @@ class Notifier {
   }
 
   /**
-   * 토스트 메시지 표출
-   * @param {string} message 
-   * @param {'info'|'success'|'warning'|'error'} type 
-   * @param {number} duration 
+   * 하단 토스트 알림 표시
+   * @param {string} message - 출력할 메시지
+   * @param {'info'|'success'|'warning'|'error'} type - 알림 유형
+   * @param {number} duration - 표시 시간 (ms, 기본 2500ms)
    */
   toast(message, type = 'info', duration = 2500) {
     if (!this.toastContainer) this.initContainers();
 
-    const bgMap = {
-      info: '#0f172a',      // Slate 900
-      success: '#1e293b',   // Dark Navy
-      warning: '#b45309',   // Amber 700
-      error: '#b91c1c'      // Red 700
-    };
-
     const toastEl = document.createElement('div');
-    toastEl.style.cssText = `
-      background: ${bgMap[type] || bgMap.info};
-      color: #ffffff;
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.45;
-      letter-spacing: -0.01em;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-      opacity: 0;
-      transform: translateY(12px);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      pointer-events: auto;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+    toastEl.className = `wrk-toast wrk-toast-${type}`;
+    
+    // 배지 라벨
+    const badgeMap = {
+      info: '안내',
+      success: '성공',
+      warning: '주의',
+      error: '확인'
+    };
+    const badgeText = badgeMap[type] || '알림';
+
+    toastEl.innerHTML = `
+      <span class="wrk-toast-badge wrk-toast-badge-${type}">${badgeText}</span>
+      <span class="wrk-toast-text">${this.escapeHtml(message)}</span>
     `;
-    toastEl.textContent = message;
+
     this.toastContainer.appendChild(toastEl);
 
-    // Fade In
+    // 애니메이션 트리거
     requestAnimationFrame(() => {
-      toastEl.style.opacity = '1';
-      toastEl.style.transform = 'translateY(0)';
+      toastEl.classList.add('show');
     });
 
-    // Fade Out
+    // 자동 제거
     setTimeout(() => {
-      toastEl.style.opacity = '0';
-      toastEl.style.transform = 'translateY(-8px)';
+      toastEl.classList.remove('show');
       setTimeout(() => {
         if (toastEl.parentNode) {
           toastEl.parentNode.removeChild(toastEl);
         }
-      }, 250);
+      }, 300);
     }, duration);
   }
 
   /**
-   * 커스텀 인앱 모달 알림 (alert)
-   * @param {string|Object} titleOrOptions
+   * 커스텀 인앱 모달 알림 (기존 alert() 대체, 문자열/객체 인자 및 Promise 양방향 완전 지원)
+   * @param {string|Object} titleOrOptions - 모달 제목 또는 옵션 객체
+   * @param {string} [maybeMessage=''] - 모달 설명 본문 (문자열 호출 시)
+   * @param {Array<{label: string, value: string}>} [details=[]] - 상세 요약
+   * @param {string} [confirmText='확인'] - 확인 버튼 텍스트
+   * @param {Function} [onConfirm=null] - 확인 콜백
+   * @returns {Promise<boolean>}
    */
   alert(titleOrOptions = '알림', maybeMessage = '', details = [], confirmText = '확인', onConfirm = null) {
     let title = '알림';
@@ -173,14 +154,24 @@ class Notifier {
         resolve(true);
       };
 
-      if (confirmBtn) confirmBtn.addEventListener('click', close);
-      if (backdrop) backdrop.addEventListener('click', close);
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', close);
+      }
+      if (backdrop) {
+        backdrop.addEventListener('click', close);
+      }
     });
   }
 
   /**
-   * 커스텀 인앱 모달 확인/취소창 (confirm)
-   * @param {string|Object} titleOrOptions
+   * 커스텀 인앱 모달 확인/취소창 (문자열/객체 인자 및 Promise 양방향 완전 지원)
+   * @param {string|Object} titleOrOptions - 모달 제목 또는 옵션 객체
+   * @param {string} [maybeMessage=''] - 모달 본문 (문자열 호출 시)
+   * @param {string} [confirmText='확인'] - 확인 버튼 텍스트
+   * @param {string} [cancelText='취소'] - 취소 버튼 텍스트
+   * @param {Function} [onConfirm=null] - 확인 콜백
+   * @param {Function} [onCancel=null] - 취소 콜백
+   * @returns {Promise<boolean>}
    */
   confirm(titleOrOptions = '확인', maybeMessage = '', confirmText = '확인', cancelText = '취소', onConfirm = null, onCancel = null) {
     let title = '확인';
@@ -219,8 +210,8 @@ class Notifier {
             <p class="wrk-modal-desc">${this.escapeHtml(message).replace(/\n/g, '<br>')}</p>
           </div>
           <div class="wrk-modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
-            <button class="btn-secondary-action" id="wrkModalCancelBtn" style="min-width:76px; padding:8px 12px; font-size:12px;">${this.escapeHtml(canText)}</button>
-            <button class="btn-primary-action" id="wrkModalConfirmBtn" style="min-width:76px; padding:8px 12px; font-size:12px; background:#0f172a; color:#fff;">${this.escapeHtml(cText)}</button>
+            <button class="btn-secondary-action" id="wrkModalCancelBtn" style="min-width:80px; padding:8px 14px; font-size:12px;">${this.escapeHtml(canText)}</button>
+            <button class="btn-primary-action" id="wrkModalConfirmBtn" style="min-width:80px; padding:8px 14px; font-size:12px; background:#1e293b; color:#fff;">${this.escapeHtml(cText)}</button>
           </div>
         </div>
       `;
@@ -244,9 +235,15 @@ class Notifier {
         resolve(result);
       };
 
-      if (confirmBtn) confirmBtn.addEventListener('click', () => closeModal(cbConfirm, true));
-      if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal(cbCancel, false));
-      if (backdrop) backdrop.addEventListener('click', () => closeModal(cbCancel, false));
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => closeModal(cbConfirm, true));
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => closeModal(cbCancel, false));
+      }
+      if (backdrop) {
+        backdrop.addEventListener('click', () => closeModal(cbCancel, false));
+      }
     });
   }
 

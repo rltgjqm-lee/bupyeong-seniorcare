@@ -41,13 +41,15 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   let pathname = decodeURIComponent(parsedUrl.pathname);
 
-  // 기본 라우팅
+  // 기본 라우팅 (참여기관 관리자 관제 포털 우선)
   if (pathname === '/' || pathname === '') {
-    pathname = '/pages/pwa-survey.html';
-  } else if (pathname === '/pwa') {
-    pathname = '/pages/pwa-survey.html';
-  } else if (pathname === '/admin' || pathname === '/org-admin') {
+    pathname = '/pages/admin.html';
+  } else if (pathname === '/admin' || pathname === '/admin.html') {
+    pathname = '/pages/admin.html';
+  } else if (pathname === '/org-admin' || pathname === '/org-admin.html') {
     pathname = '/pages/org-admin.html';
+  } else if (pathname === '/pwa' || pathname === '/pwa-survey.html') {
+    pathname = '/pages/pwa-survey.html';
   }
 
   // API Mock 엔드포인트 처리

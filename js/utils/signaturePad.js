@@ -1,12 +1,6 @@
-/**
- * @file signaturePad.js
- * @description HTML5 Canvas 터치 및 마우스 전자서명 패드 모달 엔진 (ESM)
- * - 부평구 PWA 표준 전자서명 모달 지원
- */
-
 import { notifier } from './notifier.js';
 
-export class SignaturePadModal {
+class SignaturePadModal {
   constructor() {
     this.modalEl = null;
     this.canvas = null;
@@ -18,10 +12,10 @@ export class SignaturePadModal {
   }
 
   initModal() {
-    let container = document.getElementById('bupyeongSignatureModal');
+    let container = document.getElementById('wrkSignatureModal');
     if (!container) {
       container = document.createElement('div');
-      container.id = 'bupyeongSignatureModal';
+      container.id = 'wrkSignatureModal';
       container.className = 'sig-modal-container';
       container.innerHTML = `
         <div class="sig-modal-backdrop"></div>
@@ -107,33 +101,15 @@ export class SignaturePadModal {
       if (!this.isDrawing) return;
       e.preventDefault();
       this.isDrawing = false;
-      this.ctx.closePath();
     };
 
-    // 터치 이벤트
-    this.canvas.addEventListener('touchstart', startDraw, { passive: false });
-    this.canvas.addEventListener('touchmove', draw, { passive: false });
-    this.canvas.addEventListener('touchend', endDraw, { passive: false });
-    this.canvas.addEventListener('touchcancel', endDraw, { passive: false });
-
-    // 마우스 이벤트
     this.canvas.addEventListener('mousedown', startDraw);
     this.canvas.addEventListener('mousemove', draw);
-    this.canvas.addEventListener('mouseup', endDraw);
-    this.canvas.addEventListener('mouseleave', endDraw);
-  }
+    window.addEventListener('mouseup', endDraw);
 
-  open(title, callback) {
-    this.currentCallback = callback;
-    const titleEl = this.modalEl.querySelector('#sigModalTitle');
-    if (titleEl) titleEl.textContent = title || '전자 서명';
-    this.clear();
-    this.modalEl.classList.add('active');
-  }
-
-  close() {
-    this.modalEl.classList.remove('active');
-    this.currentCallback = null;
+    this.canvas.addEventListener('touchstart', startDraw, { passive: false });
+    this.canvas.addEventListener('touchmove', draw, { passive: false });
+    window.addEventListener('touchend', endDraw);
   }
 
   clear() {
@@ -141,6 +117,27 @@ export class SignaturePadModal {
     this.hasDrawn = false;
     const guide = this.modalEl.querySelector('#sigGuideText');
     if (guide) guide.style.display = 'block';
+  }
+
+  open({ title = '전자 서명', signerName = '', onSave = null }) {
+    this.currentCallback = onSave;
+    const titleEl = this.modalEl.querySelector('#sigModalTitle');
+    if (titleEl) {
+      titleEl.innerText = signerName ? `${signerName} 님 전자 서명` : title;
+    }
+    this.clear();
+    this.modalEl.style.display = 'flex';
+    requestAnimationFrame(() => {
+      this.modalEl.classList.add('active');
+    });
+  }
+
+  close() {
+    this.modalEl.classList.remove('active');
+    setTimeout(() => {
+      this.modalEl.style.display = 'none';
+      this.currentCallback = null;
+    }, 200);
   }
 
   save() {

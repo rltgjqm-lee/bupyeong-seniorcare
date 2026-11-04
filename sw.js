@@ -5,7 +5,7 @@
  * - Network-First with Cache Fallback 전략 (실시간 최신 버전 유지 + 오프라인 즉시 구동)
  */
 
-const CACHE_NAME = 'bupyeong-seniorcare-v2.3';
+const CACHE_NAME = 'bupyeong-seniorcare-v2.7';
 
 // 핵심 정적 자산 프리캐시 목록
 const PRECACHE_ASSETS = [
@@ -17,8 +17,10 @@ const PRECACHE_ASSETS = [
   '/css/pwa.css',
   '/img/부평구.png',
   '/img/logo@4x.png',
-  '/img/icons/icon-heart-512.png',
-  '/img/icons/icon-heart-192.png',
+  '/img/incheon_intro_logo.png',
+  '/img/incheon_city_symbol.png',
+  '/img/incheon_signature_koren.png',
+  '/img/incheon_signature_kor.png',
   '/img/icons/icon-192.png',
   '/img/icons/icon-512.png',
   '/img/icons/icon-maskable.png',
@@ -36,6 +38,7 @@ const PRECACHE_ASSETS = [
   '/js/pwa/bupyeongPwaView.js',
   '/js/pwa/steps/step1InspectorView.js',
   '/js/pwa/steps/step2TargetView.js',
+  '/js/pwa/steps/step3ActivityCardView.js',
   '/js/pwa/steps/step3BasicSurveyView.js',
   '/js/pwa/steps/step4MonitoringView.js',
   '/js/pwa/steps/step5SatisfactionView.js',

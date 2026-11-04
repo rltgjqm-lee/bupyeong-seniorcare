@@ -16,14 +16,13 @@ import { ActivityCardsPane } from './panes/activityCardsPane.js';
 import { MonitoringRecordsPane } from './panes/monitoringRecordsPane.js';
 import { TargetCreatePane } from './panes/targetCreatePane.js';
 import { StatsAndFormsPane } from './panes/statsAndFormsPane.js';
-import { TargetMapPane } from './panes/targetMapPane.js';
 import { AuditLogPane } from './panes/auditLogPane.js';
 
 export class BupyeongAdminView {
   constructor() {
     this.orgUid = BUPYEONG_DEFAULT_ORG_UID;
     this.cases = [...BUPYEONG_INITIAL_CASES];
-    this.currentPane = 'paneOrgBasic';
+    this.currentPane = 'paneActivityCards';
 
     // 페인 인스턴스화
     this.orgBasicPane = new OrgBasicPane({ orgUid: this.orgUid });
@@ -36,7 +35,6 @@ export class BupyeongAdminView {
       cases: this.cases,
       onCasesUpdated: (updated) => {
         this.cases = updated;
-        if (this.targetMapPane) this.targetMapPane.setCases(updated);
         if (this.activityCardsPane) this.activityCardsPane.setCases(updated);
         if (this.monitoringRecordsPane) this.monitoringRecordsPane.setCases(updated);
         if (this.statsAndFormsPane) this.statsAndFormsPane.setCases(updated);
@@ -56,7 +54,6 @@ export class BupyeongAdminView {
     });
 
     this.statsAndFormsPane = new StatsAndFormsPane({ cases: this.cases });
-    this.targetMapPane = new TargetMapPane({ cases: this.cases });
     this.auditLogPane = new AuditLogPane({ orgUid: this.orgUid });
 
     this.panes = {
@@ -69,7 +66,6 @@ export class BupyeongAdminView {
       paneMonitoringRecords: this.monitoringRecordsPane,
       paneTargetCreate: this.targetCreatePane,
       paneStatsAndForms: this.statsAndFormsPane,
-      paneTargetMap: this.targetMapPane,
       paneAuditLog: this.auditLogPane
     };
   }
@@ -98,11 +94,6 @@ export class BupyeongAdminView {
 
     // 페인 렌더링
     this.panes[paneId].render();
-
-    // 지도 페인일 경우 리사이즈 보정
-    if (paneId === 'paneTargetMap' && this.targetMapPane.invalidateMapSize) {
-      setTimeout(() => this.targetMapPane.invalidateMapSize(), 150);
-    }
   }
 
   init() {
@@ -128,7 +119,7 @@ export class BupyeongAdminView {
       });
     });
 
-    // 첫 페인 렌더링
-    this.switchPane('paneOrgBasic');
+    // 첫 페인 렌더링 (기본: 활동관리카드 누적 대장)
+    this.switchPane(this.currentPane);
   }
 }
