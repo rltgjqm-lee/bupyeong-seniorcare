@@ -8,6 +8,9 @@
  */
 
 import { notifier } from '../../utils/notifier.js';
+import { OrgAdminApi } from '../../api/orgAdminApi.js';
+import { RbacService } from '../../services/rbacService.js';
+import { getLocalTodayString } from '../../utils/date.js';
 
 export const INITIAL_BUSINESS_UNITS = [
   {
@@ -66,8 +69,13 @@ export class BuManagePane {
     this.cases = options.cases || [];
     this.buList = JSON.parse(localStorage.getItem('wrk_bu_list') || 'null') || INITIAL_BUSINESS_UNITS;
     this.activeBuCode = this.buList[0]?.code || 'ME';
-    this.activeSubtab = 'edit'; // 'edit' | 'admins' | 'workers' | 'schedule'
+    this.activeSubtab = 'edit'; // 'edit' | 'admins' | 'workers' | 'schedule' | 'activity'
     this.inspectors = [];
+    this.actPagination = {
+      currentPage: 1,
+      pageSize: 10
+    };
+    this.selectedActIds = new Set();
   }
 
   async mount(containerEl, options = {}) {
@@ -139,7 +147,7 @@ export class BuManagePane {
     }
 
     // 2. 하위 메뉴 탭 버튼 클릭 이벤트 바인딩
-    ['edit', 'admins', 'workers', 'schedule'].forEach(subtab => {
+    ['edit', 'admins', 'workers', 'schedule', 'activity'].forEach(subtab => {
       const btn = document.getElementById(`subtabBu${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       if (btn) {
         btn.onclick = () => {
@@ -162,6 +170,8 @@ export class BuManagePane {
       this.renderWorkersSubpane();
     } else if (this.activeSubtab === 'schedule') {
       this.renderScheduleSubpane();
+    } else if (this.activeSubtab === 'activity') {
+      this.renderActivitySubpane();
     }
   }
 
@@ -197,7 +207,7 @@ export class BuManagePane {
    * 2. 하위 메뉴 탭 상태 동기화
    */
   renderSubmenuTabs() {
-    ['edit', 'admins', 'workers', 'schedule'].forEach(subtab => {
+    ['edit', 'admins', 'workers', 'schedule', 'activity'].forEach(subtab => {
       const btn = document.getElementById(`subtabBu${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       const pane = document.getElementById(`buSubpane${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
       const isActive = this.activeSubtab === subtab;
@@ -976,5 +986,697 @@ export class BuManagePane {
 
     this.closeBuModal();
     this.render();
+  }
+
+  /**
+   * 3-5. 하위 5: 활동관리 (실시간 현장 활동 내역, 선택 인쇄 및 페이지네이션)
+   */
+  async renderActivitySubpane() {
+    const pane = document.getElementById('buSubpaneActivity');
+    if (!pane) return;
+
+    const bu = this.getActiveBu();
+    if (!bu) return;
+
+    const today = getLocalTodayString();
+    const currentYearMonth = today.slice(0, 7); // 'YYYY-MM'
+
+    // 서버 API 호출로 실시간 활동 내역 로드
+    let activities = [];
+    try {
+      const res = await OrgAdminApi.getBuActivities(bu.code);
+      if (res && res.activities) {
+        activities = res.activities;
+      }
+    } catch (e) {
+      console.warn('[buManagePane] 활동 내역 API 로드 오류, 기본 모의 저장소 연동:', e);
+      activities = [];
+    }
+
+    // 4대 핵심 통계 실측 집계
+    const totalAssignedRecipients = (bu.currentRecipients !== undefined) ? bu.currentRecipients : (bu.assignedWorkers?.length ? bu.assignedWorkers.length * 2 : 0);
+    const completedThisMonth = activities.filter(a => a.status === '완료' && (a.date || '').startsWith(currentYearMonth)).length;
+    const todayActivities = activities.filter(a => a.date === today).length;
+    const unmetActivities = activities.filter(a => a.status.includes('불가')).length;
+
+    pane.innerHTML = `
+      <div style="margin: 12px 0 24px 0;">
+        <!-- 1. 활동 실적 통계 요약 바 (단정하고 슬림한 1줄 바) -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: #475569;">
+          <div>
+            <span style="font-weight: 700; color: #0f172a;">활동 실적 현황:</span>
+            <span style="margin: 0 8px; color: #cbd5e1;">|</span>
+            <span>총 배정 가구수: <strong style="color: #0f172a;">${totalAssignedRecipients}</strong>가구</span>
+            <span style="margin: 0 8px; color: #cbd5e1;">|</span>
+            <span>금월 활동 완료: <strong style="color: #0f172a;">${completedThisMonth}</strong>건</span>
+            <span style="margin: 0 8px; color: #cbd5e1;">|</span>
+            <span>금일 활동: <strong style="color: #0f172a;">${todayActivities}</strong>건</span>
+            <span style="margin: 0 8px; color: #cbd5e1;">|</span>
+            <span>상담 불가(부재 등): <strong style="color: #0f172a;">${unmetActivities}</strong>건</span>
+          </div>
+          <div style="font-size: 11.5px; color: #64748b;">
+            기준일자: ${today}
+          </div>
+        </div>
+
+        <!-- 2. 필터 검색 바 & 상단 인쇄 버튼 -->
+        <div class="filter-search-bar" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <div class="filter-item">
+            <span>진행상태:</span>
+            <select class="filter-ctrl" id="selActStatusFilter" style="height: 34px;">
+              <option value="all">전체 상태</option>
+              <option value="완료">활동 완료</option>
+              <option value="today">금일 활동</option>
+              <option value="불가">상담 불가(부재 등)</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <span>성명 검색:</span>
+            <input type="text" class="filter-ctrl" id="inpActSearchKeyword" placeholder="참여자 또는 대상자 검색" style="width: 175px; height: 34px;">
+          </div>
+          <div class="filter-item">
+            <span>기간:</span>
+            <input type="date" class="filter-ctrl" id="inpActStartDate" style="height: 34px; width: 130px;">
+            <span style="color: #94a3b8;">~</span>
+            <input type="date" class="filter-ctrl" id="inpActEndDate" style="height: 34px; width: 130px;">
+          </div>
+          <button type="button" class="btn-action secondary" id="btnResetActFilter" style="height: 34px; font-size: 12px;">초기화</button>
+
+          <!-- 상단 인쇄 버튼 그룹 -->
+          <div style="margin-left: auto; display: flex; gap: 6px;">
+            <button type="button" class="btn-action secondary" id="btnPrintSelectedActs" style="height: 34px; font-size: 12px; font-weight: 700;">선택 인쇄</button>
+            <button type="button" class="btn-action primary" id="btnPrintTodayActReport" style="height: 34px; font-size: 12px; font-weight: 700; background: #0f172a;">활동 보고서 인쇄</button>
+          </div>
+        </div>
+
+        <!-- 3. 실시간 현장 활동 내역 테이블 -->
+        <div class="table-wrapper" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;"><input type="checkbox" id="chkAllBuActs"></th>
+                <th style="width: 50px;">순번</th>
+                <th style="width: 95px;">활동일자</th>
+                <th style="width: 170px;">대상 어르신 (관리번호)</th>
+                <th style="width: 130px;">담당 참여자</th>
+                <th>활동 유형</th>
+                <th style="width: 130px;">활동 시간(근태연동)</th>
+                <th style="width: 90px;">상태</th>
+                <th style="width: 65px;">상세</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyBuActivities">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 4. 하단 표준 페이지네이션 바 -->
+        <div id="buActPagination" class="table-pagination-footer" style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;"></div>
+      </div>
+    `;
+
+    // 테이블 렌더링 함수
+    const renderTable = () => {
+      const tbody = document.getElementById('tbodyBuActivities');
+      if (!tbody) return;
+
+      const stFilter = document.getElementById('selActStatusFilter')?.value || 'all';
+      const kwFilter = (document.getElementById('inpActSearchKeyword')?.value || '').trim().toLowerCase();
+      const sDate = document.getElementById('inpActStartDate')?.value || '';
+      const eDate = document.getElementById('inpActEndDate')?.value || '';
+
+      let filtered = activities;
+
+      // 상태 필터
+      if (stFilter === '완료') {
+        filtered = filtered.filter(a => a.status === '완료');
+      } else if (stFilter === 'today') {
+        filtered = filtered.filter(a => a.date === today);
+      } else if (stFilter === '불가') {
+        filtered = filtered.filter(a => a.status.includes('불가'));
+      }
+
+      // 성명 검색 (참여자 또는 대상자)
+      if (kwFilter) {
+        filtered = filtered.filter(a => {
+          const tName = (a.targetName || '').toLowerCase();
+          const tUid = (a.targetUid || '').toLowerCase();
+          const wNames = (a.workerNames || []).join(' ').toLowerCase();
+          return tName.includes(kwFilter) || tUid.includes(kwFilter) || wNames.includes(kwFilter);
+        });
+      }
+
+      // 기간 필터
+      if (sDate) filtered = filtered.filter(a => (a.date || '') >= sDate);
+      if (eDate) filtered = filtered.filter(a => (a.date || '') <= eDate);
+
+      const totalItems = filtered.length;
+      const pageSize = this.actPagination.pageSize;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+      if (this.actPagination.currentPage > totalPages) {
+        this.actPagination.currentPage = totalPages;
+      }
+      const startIndex = (this.actPagination.currentPage - 1) * pageSize;
+      const paged = filtered.slice(startIndex, startIndex + pageSize);
+
+      // 하단 페이지네이션 바 렌더링
+      this.renderActPagination(totalItems, totalPages, renderTable);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="padding: 32px 0; color: #94a3b8; text-align: center;">
+              조건에 부합하는 현장 활동 내역이 없습니다.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const canReadWrite = RbacService.canWrite();
+
+      tbody.innerHTML = paged.map((a, idx) => {
+        // 관리번호 권한별 마스킹
+        let dispUid = a.targetUid || '-';
+        if (!canReadWrite && a.targetUid) {
+          const parts = String(a.targetUid).split('-');
+          dispUid = (parts.length >= 5) ? `${parts[0]}-**-***-**-${parts[4]}` : 'C-**-***-**-****';
+        }
+
+        const isComplete = a.status === '완료';
+        const badgeStyle = isComplete
+          ? 'background: #f8fafc; color: #16a34a; border: 1px solid #cbd5e1; font-weight: 700;'
+          : 'background: #f8fafc; color: #dc2626; border: 1px solid #cbd5e1; font-weight: 700;'
+
+        const workerDisplay = Array.isArray(a.workerNames) ? a.workerNames.join(', ') : (a.workerNames || '-');
+        const isChecked = this.selectedActIds.has(a.id);
+
+        return `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="text-align: center;">
+              <input type="checkbox" class="chk-bu-act-item" value="${a.id}" ${isChecked ? 'checked' : ''}>
+            </td>
+            <td style="color: #64748b; font-weight: 700; text-align: center;">${startIndex + idx + 1}</td>
+            <td style="font-size: 11.5px; color: #0f172a; font-weight: 600;">${a.date}</td>
+            <td>
+              <strong>${a.targetName}</strong>
+              <div style="font-family: monospace; font-size: 11px; color: #64748b; margin-top: 2px;">${dispUid}</div>
+            </td>
+            <td style="font-size: 11.5px; color: #334155;">${workerDisplay}</td>
+            <td style="font-size: 12px; color: #0f172a; text-align: left;">
+              ${a.activityType}
+              ${a.unmetReason ? `<div style="font-size: 11px; color: #dc2626; margin-top: 2px;">사유: ${a.unmetReason}</div>` : ''}
+            </td>
+            <td style="font-size: 11.5px; color: #475569; font-family: monospace;">${a.time}</td>
+            <td>
+              <span style="font-size: 11px; padding: 2px 8px; border-radius: 3px; ${badgeStyle}">
+                ${a.status}
+              </span>
+            </td>
+            <td>
+              <button type="button" class="btn-table-sm btn-view-bu-act" data-act-id="${a.id}" style="font-size: 11px; padding: 2px 8px;">
+                상세
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // 전체 선택 체크박스 동기화
+      const chkAll = document.getElementById('chkAllBuActs');
+      if (chkAll) {
+        chkAll.checked = paged.length > 0 && paged.every(a => this.selectedActIds.has(a.id));
+        chkAll.onchange = (e) => {
+          const checked = e.target.checked;
+          paged.forEach(a => {
+            if (checked) this.selectedActIds.add(a.id);
+            else this.selectedActIds.delete(a.id);
+          });
+          renderTable();
+        };
+      }
+
+      // 개별 체크박스 이벤트 바인딩
+      tbody.querySelectorAll('.chk-bu-act-item').forEach(chk => {
+        chk.onchange = (e) => {
+          const id = e.target.value;
+          if (e.target.checked) this.selectedActIds.add(id);
+          else this.selectedActIds.delete(id);
+          if (chkAll) chkAll.checked = paged.every(a => this.selectedActIds.has(a.id));
+        };
+      });
+
+      // 상세 버튼 이벤트 바인딩
+      tbody.querySelectorAll('.btn-view-bu-act').forEach(btn => {
+        btn.onclick = () => {
+          const actId = btn.dataset.actId;
+          const targetAct = activities.find(a => a.id === actId);
+          if (targetAct) {
+            this.openActivityDetailModal(targetAct, bu, () => this.renderActivitySubpane());
+          }
+        };
+      });
+    };
+
+    // 필터 이벤트 바인딩
+    const selStatus = document.getElementById('selActStatusFilter');
+    const inpKw = document.getElementById('inpActSearchKeyword');
+    const inpStart = document.getElementById('inpActStartDate');
+    const inpEnd = document.getElementById('inpActEndDate');
+    const btnReset = document.getElementById('btnResetActFilter');
+    const btnPrintSelected = document.getElementById('btnPrintSelectedActs');
+    const btnPrintTodayReport = document.getElementById('btnPrintTodayActReport');
+
+    const triggerSearch = () => {
+      this.actPagination.currentPage = 1;
+      renderTable();
+    };
+
+    if (selStatus) selStatus.onchange = triggerSearch;
+    if (inpKw) inpKw.oninput = triggerSearch;
+    if (inpStart) inpStart.onchange = triggerSearch;
+    if (inpEnd) inpEnd.onchange = triggerSearch;
+
+    if (btnReset) {
+      btnReset.onclick = () => {
+        if (selStatus) selStatus.value = 'all';
+        if (inpKw) inpKw.value = '';
+        if (inpStart) inpStart.value = '';
+        if (inpEnd) inpEnd.value = '';
+        this.selectedActIds.clear();
+        this.actPagination.currentPage = 1;
+        renderTable();
+        notifier.toast('필터가 초기화되었습니다.', 'info');
+      };
+    }
+
+    // 상단 [선택 인쇄]
+    if (btnPrintSelected) {
+      btnPrintSelected.onclick = () => {
+        const selectedList = activities.filter(a => this.selectedActIds.has(a.id));
+        if (selectedList.length === 0) {
+          notifier.toast('인쇄할 활동 항목을 먼저 선택해 주십시오.', 'warning');
+          return;
+        }
+        this.printActivityBatchReport(selectedList, bu, '선택 활동 내역 보고서');
+      };
+    }
+
+    // 상단 [활동 보고서 인쇄] (금일 활동 보고서 종합 출력)
+    if (btnPrintTodayReport) {
+      btnPrintTodayReport.onclick = () => {
+        const todayList = activities.filter(a => a.date === today);
+        const targetList = todayList.length > 0 ? todayList : activities;
+        const subTitle = todayList.length > 0 ? `금일 활동 종합 보고서 (${today})` : `사업단 활동 종합 보고서`;
+        this.printActivityBatchReport(targetList, bu, subTitle);
+      };
+    }
+
+    renderTable();
+  }
+
+  /**
+   * 활동관리 하단 표준 페이지네이션 바
+   */
+  renderActPagination(totalItems, totalPages, onPageChange) {
+    const container = document.getElementById('buActPagination');
+    if (!container) return;
+
+    if (totalItems === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const { currentPage, pageSize } = this.actPagination;
+    const startNum = (currentPage - 1) * pageSize + 1;
+    const endNum = Math.min(totalItems, currentPage * pageSize);
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+
+    const pageButtons = [];
+    for (let p = startPage; p <= endPage; p++) {
+      pageButtons.push(`
+        <button type="button" class="page-btn ${p === currentPage ? 'active' : ''}" data-act-page="${p}" style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: ${p === currentPage ? '#0f172a' : '#ffffff'}; color: ${p === currentPage ? '#ffffff' : '#334155'}; font-weight: ${p === currentPage ? '800' : '600'}; border-radius: 3px; cursor: pointer;">
+          ${p}
+        </button>
+      `);
+    }
+
+    container.innerHTML = `
+      <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+        전체 ${totalItems}건 중 ${startNum}-${endNum}건 표시
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <select id="selBuActPageSize" class="filter-ctrl" style="height: 28px; font-size: 11.5px; padding: 2px 6px;">
+          <option value="10" ${pageSize === 10 ? 'selected' : ''}>10개씩 보기</option>
+          <option value="20" ${pageSize === 20 ? 'selected' : ''}>20개씩 보기</option>
+          <option value="50" ${pageSize === 50 ? 'selected' : ''}>50개씩 보기</option>
+        </select>
+        <div style="display: flex; align-items: center; gap: 3px;">
+          <button type="button" class="page-btn" id="btnActPageFirst" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">«</button>
+          <button type="button" class="page-btn" id="btnActPagePrev" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">‹</button>
+          ${pageButtons.join('')}
+          <button type="button" class="page-btn" id="btnActPageNext" ${currentPage === totalPages ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">›</button>
+          <button type="button" class="page-btn" id="btnActPageLast" ${currentPage === totalPages ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">»</button>
+        </div>
+      </div>
+    `;
+
+    const selPageSize = container.querySelector('#selBuActPageSize');
+    if (selPageSize) {
+      selPageSize.onchange = (e) => {
+        this.actPagination.pageSize = parseInt(e.target.value, 10);
+        this.actPagination.currentPage = 1;
+        onPageChange();
+      };
+    }
+
+    container.querySelectorAll('.page-btn[data-act-page]').forEach(btn => {
+      btn.onclick = () => {
+        this.actPagination.currentPage = parseInt(btn.getAttribute('data-act-page'), 10);
+        onPageChange();
+      };
+    });
+
+    const btnFirst = container.querySelector('#btnActPageFirst');
+    const btnPrev = container.querySelector('#btnActPagePrev');
+    const btnNext = container.querySelector('#btnActPageNext');
+    const btnLast = container.querySelector('#btnActPageLast');
+
+    if (btnFirst) btnFirst.onclick = () => { this.actPagination.currentPage = 1; onPageChange(); };
+    if (btnPrev) btnPrev.onclick = () => { if (this.actPagination.currentPage > 1) { this.actPagination.currentPage--; onPageChange(); } };
+    if (btnNext) btnNext.onclick = () => { if (this.actPagination.currentPage < totalPages) { this.actPagination.currentPage++; onPageChange(); } };
+    if (btnLast) btnLast.onclick = () => { this.actPagination.currentPage = totalPages; onPageChange(); };
+  }
+
+  /**
+   * 상단 활동 보고서 일괄 인쇄 (A4 공공기관 공식 보고서 서식)
+   */
+  printActivityBatchReport(actList, bu, reportTitle) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      notifier.toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해 주십시오.', 'warning');
+      return;
+    }
+
+    const today = getLocalTodayString();
+    const canReadWrite = RbacService.canWrite();
+
+    const tableRows = actList.map((a, idx) => {
+      let dispUid = a.targetUid || '-';
+      if (!canReadWrite && a.targetUid) {
+        const parts = String(a.targetUid).split('-');
+        dispUid = (parts.length >= 5) ? `${parts[0]}-**-***-**-${parts[4]}` : 'C-**-***-**-****';
+      }
+      const workerDisplay = Array.isArray(a.workerNames) ? a.workerNames.join(', ') : (a.workerNames || '-');
+
+      return `
+        <tr>
+          <td style="text-align: center;">${idx + 1}</td>
+          <td style="text-align: center;">${a.date}</td>
+          <td><strong>${a.targetName}</strong> <span style="font-family: monospace; font-size: 11px;">(${dispUid})</span></td>
+          <td>${workerDisplay}</td>
+          <td>${a.activityType}</td>
+          <td style="font-family: monospace; text-align: center;">${a.time}</td>
+          <td style="text-align: center;"><strong>${a.status}</strong></td>
+          <td style="font-size: 11px;">${a.content || a.unmetReason || '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>
+        <meta charset="UTF-8">
+        <title>${reportTitle} - ${bu.name}</title>
+        <style>
+          @page { size: A4 landscape; margin: 15mm 12mm; }
+          body { font-family: Pretendard, 'Malgun Gothic', sans-serif; color: #0f172a; margin: 0; padding: 15px; font-size: 12px; line-height: 1.5; }
+          .report-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+          .report-title { font-size: 18px; font-weight: 800; margin: 0 0 4px 0; }
+          .report-subtitle { font-size: 11.5px; color: #64748b; margin: 0; }
+          .summary-info { display: flex; justify-content: space-between; font-size: 11.5px; color: #475569; margin-bottom: 8px; font-weight: 600; }
+          table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+          table.report-table th, table.report-table td { border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 11px; }
+          table.report-table th { background: #f8fafc; color: #334155; font-weight: 700; text-align: center; }
+          .footer-sign { margin-top: 24px; text-align: right; font-size: 11.5px; color: #475569; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="report-header">
+          <h1 class="report-title">${reportTitle}</h1>
+          <p class="report-subtitle">인천광역시 부평구 통합돌봄센터 | 소속 사업단: ${bu.name} (${bu.code})</p>
+        </div>
+
+        <div class="summary-info">
+          <span>총 출력 건수: <strong>${actList.length}</strong>건</span>
+          <span>출력 일시: ${today} | 담당 관리자: ${bu.manager || '담당자'}</span>
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="width: 35px;">순번</th>
+              <th style="width: 75px;">활동일자</th>
+              <th style="width: 140px;">대상 어르신(관리번호)</th>
+              <th style="width: 100px;">담당 참여자</th>
+              <th style="width: 130px;">활동 유형</th>
+              <th style="width: 90px;">활동시간</th>
+              <th style="width: 60px;">상태</th>
+              <th>현장 활동 내용 및 특이사항</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer-sign">
+          <p>위와 같이 사업단 현장 안심살핌 활동 실적을 공식 보고합니다.</p>
+          <p style="margin-top: 14px; font-weight: 700; font-size: 12px;">인천광역시 부평구 통합돌봄센터 사업단장 (직인생략)</p>
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
+  /**
+   * 현장 활동 상세 모달 열기 및 인쇄 연동
+   */
+  openActivityDetailModal(act, bu, onUpdated) {
+    const modal = document.getElementById('modalBuActivityDetail');
+    const body = document.getElementById('bodyBuActivityDetail');
+    if (!modal || !body) return;
+
+    const canReadWrite = RbacService.canWrite();
+    let dispUid = act.targetUid || '-';
+    if (!canReadWrite && act.targetUid) {
+      const parts = String(act.targetUid).split('-');
+      dispUid = (parts.length >= 5) ? `${parts[0]}-**-***-**-${parts[4]}` : 'C-**-***-**-****';
+    }
+
+    const workerDisplay = Array.isArray(act.workerNames) ? act.workerNames.join(', ') : (act.workerNames || '-');
+
+    body.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; font-size: 12.5px;">
+            <div><span style="color: #64748b; font-weight: 600;">활동 일자:</span> <strong style="color: #0f172a;">${act.date}</strong></div>
+            <div><span style="color: #64748b; font-weight: 600;">활동 시간(근태):</span> <strong style="color: #0f172a; font-family: monospace;">${act.time}</strong></div>
+            <div><span style="color: #64748b; font-weight: 600;">대상 어르신:</span> <strong>${act.targetName}</strong> <span style="font-size: 11px; color: #64748b;">(${dispUid})</span></div>
+            <div><span style="color: #64748b; font-weight: 600;">소속 사업단:</span> <strong>${bu.name} (${bu.code})</strong></div>
+            <div style="grid-column: span 2;"><span style="color: #64748b; font-weight: 600;">담당 참여자:</span> <strong style="color: #0f172a;">${workerDisplay}</strong></div>
+            <div style="grid-column: span 2;"><span style="color: #64748b; font-weight: 600;">활동 유형:</span> <strong style="color: #0f172a;">${act.activityType}</strong></div>
+            <div style="grid-column: span 2;"><span style="color: #64748b; font-weight: 600;">진행 상태:</span> <strong style="color: ${act.status === '완료' ? '#16a34a' : '#dc2626'};">${act.status}</strong> ${act.unmetReason ? `<span style="font-size: 11.5px; color: #dc2626; margin-left: 6px;">(사유: ${act.unmetReason})</span>` : ''}</div>
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">현장 활동 및 상담 내용</label>
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 12px; font-size: 12.5px; line-height: 1.6; color: #1e293b; min-height: 60px;">
+            ${act.content || '내용 없음'}
+          </div>
+        </div>
+
+        ${act.specialNotes ? `
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">특이사항 및 전달사항</label>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: #334155;">
+              ${act.specialNotes}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">관리자 확인 점검</div>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: #0f172a; cursor: pointer; margin-bottom: 8px;">
+            <input type="checkbox" id="chkActivityConfirmed" ${act.isConfirmed ? 'checked' : ''} style="width: 16px; height: 16px;">
+            활동 내역 검수 및 확인 완료
+          </label>
+          <input type="text" class="filter-ctrl" id="inpActivityAdminMemo" placeholder="관리자 검수 의견 또는 조치사항 입력" value="${act.adminMemo || ''}" style="width: 100%; height: 34px;">
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
+
+    // 닫기 이벤트
+    const btnClose = document.getElementById('btnCloseActivityDetailModal');
+    const btnCancel = document.getElementById('btnCancelActivityDetail');
+    const closeModal = () => modal.classList.remove('active');
+    if (btnClose) btnClose.onclick = closeModal;
+    if (btnCancel) btnCancel.onclick = closeModal;
+
+    // 인쇄 버튼 이벤트
+    const btnPrint = document.getElementById('btnPrintActivityDetail');
+    if (btnPrint) {
+      btnPrint.onclick = () => this.printActivityReport(act, bu, dispUid, workerDisplay);
+    }
+
+    // 확인 상태 저장 버튼 이벤트 (서버 API 호출)
+    const btnSave = document.getElementById('btnSaveActivityConfirm');
+    if (btnSave) {
+      btnSave.onclick = async () => {
+        const isConfirmed = document.getElementById('chkActivityConfirmed')?.checked || false;
+        const adminMemo = (document.getElementById('inpActivityAdminMemo')?.value || '').trim();
+
+        try {
+          await OrgAdminApi.updateActivityStatus(act.id, { isConfirmed, adminMemo });
+          act.isConfirmed = isConfirmed;
+          act.adminMemo = adminMemo;
+          notifier.toast('관리자 확인 상태가 성공적으로 저장되었습니다.', 'success');
+          closeModal();
+          if (onUpdated) onUpdated();
+        } catch (e) {
+          notifier.toast('확인 상태 저장 중 오류가 발생했습니다.', 'error');
+        }
+      };
+    }
+  }
+
+  /**
+   * 활동 보고서 A4 공식 인쇄 서식 출력
+   */
+  printActivityReport(act, bu, dispUid, workerDisplay) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      notifier.toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해 주십시오.', 'warning');
+      return;
+    }
+
+    const today = getLocalTodayString();
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>
+        <meta charset="UTF-8">
+        <title>현장 활동 일지 및 결과 보고서 - ${act.targetName}</title>
+        <style>
+          @page { size: A4 portrait; margin: 18mm 15mm; }
+          body { font-family: Pretendard, 'Malgun Gothic', sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 13px; line-height: 1.6; }
+          .report-header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+          .report-title { font-size: 20px; font-weight: 800; margin: 0 0 6px 0; }
+          .report-subtitle { font-size: 12px; color: #64748b; margin: 0; }
+          table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+          table.report-table th, table.report-table td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 12px; }
+          table.report-table th { background: #f8fafc; color: #334155; font-weight: 700; text-align: left; width: 22%; }
+          .content-box { border: 1px solid #cbd5e1; padding: 12px 14px; min-height: 120px; font-size: 12.5px; white-space: pre-wrap; margin-bottom: 16px; }
+          .footer-sign { margin-top: 36px; text-align: right; font-size: 12px; color: #475569; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="report-header">
+          <h1 class="report-title">현장 안심살핌 활동 일지 및 결과 보고서</h1>
+          <p class="report-subtitle">인천광역시 부평구 통합돌봄센터 | 소속 사업단: ${bu.name} (${bu.code})</p>
+        </div>
+
+        <table class="report-table">
+          <tr>
+            <th>문서 관리번호</th>
+            <td style="font-family: monospace;">${act.id}</td>
+            <th>출력 일자</th>
+            <td>${today}</td>
+          </tr>
+          <tr>
+            <th>활동 일자</th>
+            <td><strong>${act.date}</strong></td>
+            <th>활동 시간(근태)</th>
+            <td style="font-family: monospace;">${act.time}</td>
+          </tr>
+          <tr>
+            <th>수혜 대상 어르신</th>
+            <td><strong>${act.targetName}</strong> (${act.targetGender || '미상'}/${act.targetAge || ''}세)</td>
+            <th>어르신 관리번호</th>
+            <td style="font-family: monospace;">${dispUid}</td>
+          </tr>
+          <tr>
+            <th>담당 참여자(살핌단)</th>
+            <td><strong>${workerDisplay}</strong></td>
+            <th>진행 상태</th>
+            <td><strong>${act.status}</strong> ${act.unmetReason ? `(${act.unmetReason})` : ''}</td>
+          </tr>
+          <tr>
+            <th>활동 유형</th>
+            <td colspan="3">${act.activityType}</td>
+          </tr>
+        </table>
+
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px;">1. 현장 활동 및 상담 상세 내역</div>
+        <div class="content-box">${act.content || '내용 없음'}</div>
+
+        ${act.specialNotes ? `
+          <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px;">2. 특이사항 및 조치 연계 내용</div>
+          <div class="content-box" style="min-height: 60px;">${act.specialNotes}</div>
+        ` : ''}
+
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px;">3. 사업단 관리자 검수 및 확인</div>
+        <table class="report-table">
+          <tr>
+            <th>확인 여부</th>
+            <td><strong>${act.isConfirmed ? '검수 완료 (승인)' : '확인 대기'}</strong></td>
+            <th>확인자</th>
+            <td>${bu.manager || '담당 관리자'}</td>
+          </tr>
+          <tr>
+            <th>관리자 의견</th>
+            <td colspan="3">${act.adminMemo || '특이사항 없음'}</td>
+          </tr>
+        </table>
+
+        <div class="footer-sign">
+          <p>위와 같이 현장 살핌 활동 사항을 공식 보고합니다.</p>
+          <p style="margin-top: 18px; font-weight: 700; font-size: 13px;">인천광역시 부평구 통합돌봄센터 사업단장 (직인생략)</p>
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   }
 }

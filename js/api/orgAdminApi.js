@@ -86,4 +86,24 @@ export class OrgAdminApi {
   static async getCaseDetail(caseUid) {
     return await ApiClient.get('/cases/detail', { caseUid });
   }
+
+  /**
+   * 5. 사업단별 실시간 현장 활동 내역 목록 조회
+   * @param {string} buCode (예: 'ME', 'HE', 'CL', 'EM' 또는 'all')
+   * @param {Object} filters
+   * @returns {Promise<any>}
+   */
+  static async getBuActivities(buCode = 'all', filters = {}) {
+    return await ApiClient.get(`/business-units/${encodeURIComponent(buCode)}/activities`, filters);
+  }
+
+  /**
+   * 5-1. 사업단 현장 활동 관리자 확인 및 상태 수정 저장
+   * @param {string} activityId 
+   * @param {Object} updateData
+   * @returns {Promise<any>}
+   */
+  static async updateActivityStatus(activityId, updateData) {
+    return await ApiClient.put(`/activities/${encodeURIComponent(activityId)}`, updateData);
+  }
 }

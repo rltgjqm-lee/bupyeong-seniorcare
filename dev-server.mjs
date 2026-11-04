@@ -137,6 +137,169 @@ const server = http.createServer((req, res) => {
       return;
     }
 
+    // 3) 사업단별 실시간 현장 활동 내역 조회: /api/v1/business-units/:buCode/activities
+    const buActMatch = pathname.match(/^\/api\/v1\/business-units\/([^/]+)\/activities$/);
+    if (buActMatch && req.method === 'GET') {
+      const buCode = decodeURIComponent(buActMatch[1]);
+      
+      // 기본 시드 활동 내역 데이터 (PWA 실시간 접수와 연동)
+      if (!global.activityStore) {
+        global.activityStore = [
+          {
+            id: 'ACT-28-237-01-001',
+            buCode: 'ME',
+            date: '2026-11-04',
+            time: '10:00 ~ 10:45',
+            targetUid: 'C-28-237-01-K1001',
+            targetName: '김*수',
+            targetAge: 74,
+            targetGender: '남',
+            workerNames: ['박영희', '김철수'],
+            activityType: '밑반찬·영양죽 배달 및 식사 확인',
+            status: '완료',
+            unmetReason: '',
+            content: '영양죽 및 주간 밑반찬 전달 완료. 식사 상태 양호하시며 당뇨약 정시 복용 여부 확인.',
+            specialNotes: '다음 주 수요일 병원 진료 예정으로 오후 배달 요청하심.',
+            isConfirmed: true,
+            adminMemo: '관리자 확인 완료 (정시 배달 확인)'
+          },
+          {
+            id: 'ACT-28-237-01-002',
+            buCode: 'ME',
+            date: '2026-11-04',
+            time: '11:10 ~ 11:30',
+            targetUid: 'C-28-237-01-K1004',
+            targetName: '최*철',
+            targetAge: 68,
+            targetGender: '남',
+            workerNames: ['박영희', '김철수'],
+            activityType: '긴급 영양죽 배달',
+            status: '상담 불가',
+            unmetReason: '대상자 부재 (주간보호센터)',
+            content: '현장 방문 시 자택 부재중. 주간보호센터 일정으로 유선 연락하여 안전 확인.',
+            specialNotes: '오후 5시 이후 재통화 완료.',
+            isConfirmed: false,
+            adminMemo: ''
+          },
+          {
+            id: 'ACT-28-237-01-003',
+            buCode: 'ME',
+            date: '2026-11-02',
+            time: '09:30 ~ 10:15',
+            targetUid: 'C-28-237-01-K1003',
+            targetName: '이*순',
+            targetAge: 81,
+            targetGender: '여',
+            workerNames: ['이순신', '강감찬'],
+            activityType: '정기 밑반찬 지원 및 안부 확인',
+            status: '완료',
+            unmetReason: '',
+            content: '밑반찬 3종 전달. 무릎 관절염 통증 호소하시어 파스 제공 및 보건소 연계 안내.',
+            specialNotes: '주거환경 환기 상태 점검 완료.',
+            isConfirmed: true,
+            adminMemo: '확인 완료'
+          },
+          {
+            id: 'ACT-28-237-01-004',
+            buCode: 'HE',
+            date: '2026-11-04',
+            time: '13:30 ~ 14:20',
+            targetUid: 'C-28-237-01-K1002',
+            targetName: '박*동',
+            targetAge: 76,
+            targetGender: '남',
+            workerNames: ['이순신', '강감찬'],
+            activityType: '방문간호 혈압측정 및 복약지도',
+            status: '완료',
+            unmetReason: '',
+            content: '혈압 125/80 측정. 혈당약 정시 복용 중이시며 건강 상태 양호.',
+            specialNotes: '치매안심센터 선별검사 예약 완료.',
+            isConfirmed: true,
+            adminMemo: '전담 간호사 확인 완료'
+          },
+          {
+            id: 'ACT-28-237-01-005',
+            buCode: 'CL',
+            date: '2026-11-03',
+            time: '10:00 ~ 12:30',
+            targetUid: 'C-28-237-01-K1004',
+            targetName: '최*철',
+            targetAge: 68,
+            targetGender: '남',
+            workerNames: ['박영희', '김철수'],
+            activityType: '주거 방역소독 및 특수청소',
+            status: '완료',
+            unmetReason: '',
+            content: '주방 싱크대 해충 방역 및 대형 침구류 세탁 지원.',
+            specialNotes: '겨울철 문풍지 및 단열 에어캡 부착 완료.',
+            isConfirmed: true,
+            adminMemo: '주거개선 사진 증빙 완료'
+          },
+          {
+            id: 'ACT-28-237-01-006',
+            buCode: 'EM',
+            date: '2026-11-04',
+            time: '15:00 ~ 15:40',
+            targetUid: 'C-28-237-01-K1005',
+            targetName: '정*자',
+            targetAge: 79,
+            targetGender: '여',
+            workerNames: ['박영희', '이순신'],
+            activityType: '1:1 안심이웃 말벗 방문상담',
+            status: '완료',
+            unmetReason: '',
+            content: '우울감 호소 경청 및 말벗 상담. 돌봄스피커 음량 및 연결 상태 점검.',
+            specialNotes: '노인복지관 노래교실 프로그램 안내.',
+            isConfirmed: false,
+            adminMemo: ''
+          }
+        ];
+      }
+
+      let list = global.activityStore;
+      if (buCode !== 'all') {
+        list = list.filter(a => a.buCode === buCode);
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        buCode,
+        total: list.length,
+        activities: list
+      }));
+      return;
+    }
+
+    // 4) 활동 확인 상태 업데이트: /api/v1/activities/:id
+    const actUpdateMatch = pathname.match(/^\/api\/v1\/activities\/([^/]+)$/);
+    if (actUpdateMatch && req.method === 'PUT') {
+      const actId = decodeURIComponent(actUpdateMatch[1]);
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const updateData = JSON.parse(body || '{}');
+          const target = (global.activityStore || []).find(a => a.id === actId);
+          if (target) {
+            if (updateData.isConfirmed !== undefined) target.isConfirmed = updateData.isConfirmed;
+            if (updateData.adminMemo !== undefined) target.adminMemo = updateData.adminMemo;
+            if (updateData.status !== undefined) target.status = updateData.status;
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: true,
+            message: '활동 확인 상태가 저장되었습니다.',
+            activity: target || null
+          }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, message: '잘못된 요청입니다.' }));
+        }
+      });
+      return;
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       success: true,
