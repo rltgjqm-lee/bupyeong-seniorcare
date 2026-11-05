@@ -294,6 +294,18 @@ const server = http.createServer((req, res) => {
     // 3-B) 사업단 신규 활동 및 방문 일정 등록: POST /api/v1/business-units/:buCode/activities
     if (buActMatch && req.method === 'POST') {
       const buCode = decodeURIComponent(buActMatch[1]);
+      const adminBu = req.headers['x-admin-bu'] || 'ALL';
+
+      // Data Scope RBAC 검증
+      if (adminBu !== 'ALL' && adminBu !== buCode) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          success: false,
+          message: `해당 사업단 [${buCode}]에 대한 쓰기 권한이 없습니다. (소속: ${adminBu})`
+        }));
+        return;
+      }
+
       let body = '';
       req.on('data', chunk => { body += chunk; });
       req.on('end', () => {
@@ -382,7 +394,19 @@ const server = http.createServer((req, res) => {
     // 4-B) 활동 일정 삭제: DELETE /api/v1/activities/:id
     if (actUpdateMatch && req.method === 'DELETE') {
       const actId = decodeURIComponent(actUpdateMatch[1]);
+      const adminBu = req.headers['x-admin-bu'] || 'ALL';
+
       if (global.activityStore) {
+        const targetAct = global.activityStore.find(a => a.id === actId);
+        if (targetAct && adminBu !== 'ALL' && targetAct.buCode !== adminBu) {
+          res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: false,
+            message: `해당 사업단 [${targetAct.buCode}] 일정 삭제 권한이 없습니다. (소속: ${adminBu})`
+          }));
+          return;
+        }
+
         const idx = global.activityStore.findIndex(a => a.id === actId);
         if (idx !== -1) {
           global.activityStore.splice(idx, 1);

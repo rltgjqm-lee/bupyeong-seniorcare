@@ -734,6 +734,8 @@ export class BuManagePane {
       `).join('');
     }
 
+    const canWriteThisBu = RbacService.canWriteBu(bu.code);
+
     // 등록된 일정 리스트
     let scheduleRowsHtml = '';
     const schedList = d1Activities.length > 0 ? d1Activities : (bu.schedules || []);
@@ -753,6 +755,10 @@ export class BuManagePane {
         const actContent = sched.content || sched.memo || sched.activityType || '정례 사업단 지원 서비스';
         const isScheduled = sched.status === '예정';
 
+        const deleteBtnHtml = canWriteThisBu
+          ? `<button type="button" class="btn-action secondary btn-delete-bu-sched" data-act-id="${schedId}" style="padding: 4px 10px; font-size: 11px; color: #dc2626; border-color: #fecaca; background: #fff;">삭제</button>`
+          : `<span style="font-size: 11px; color: #94a3b8; padding: 4px 6px;">[열람]</span>`;
+
         return `
           <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;">
             <div style="display: flex; flex-direction: column; gap: 3px;">
@@ -767,9 +773,7 @@ export class BuManagePane {
                 담당 참여자: <strong>${workers}</strong> | 내용: ${actContent}
               </div>
             </div>
-            <button type="button" class="btn-action secondary btn-delete-bu-sched" data-act-id="${schedId}" style="padding: 4px 10px; font-size: 11px; color: #dc2626; border-color: #fecaca; background: #fff;">
-              삭제
-            </button>
+            ${deleteBtnHtml}
           </div>
         `;
       }).join('');
@@ -786,49 +790,58 @@ export class BuManagePane {
             해당 사업단의 수혜 어르신별 방문 및 활동 서비스 일정을 지정·등록합니다.
           </p>
 
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">수혜 대상 어르신 검색 및 선택 <span style="color:#dc2626;">*</span></label>
-              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <input type="text" class="filter-ctrl" id="inpSchedTargetSearch" placeholder="어르신 성명 또는 관리번호(UID) 검색..." style="flex: 1; height: 36px; border-radius: 4px; font-size: 12px;">
-                <button type="button" class="btn-action secondary" id="btnResetSchedTargetSearch" style="padding: 0 12px; height: 36px; font-size: 11.5px; white-space: nowrap;">초기화</button>
-              </div>
-              <select class="filter-ctrl" id="inpSchedTargetSelect" style="width: 100%; height: 38px; border-radius: 4px;">
-                ${targetOptions}
-              </select>
+          ${!canWriteThisBu ? `
+            <div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 10px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-bottom: 14px; line-height: 1.5;">
+              [타 사업단 전담 - 읽기 전용 모드]<br>
+              본 사업단(${bu.name}) 전담 관리자 또는 총괄 관리자만 일정을 등록할 수 있습니다.
             </div>
+          ` : ''}
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <fieldset ${!canWriteThisBu ? 'disabled style="border:none; padding:0; margin:0; opacity:0.6;"' : 'style="border:none; padding:0; margin:0;"'}>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
               <div>
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">예정 일자 <span style="color:#dc2626;">*</span></label>
-                <input type="date" class="filter-ctrl" id="inpSchedDate" value="${todayStr}" style="width: 100%; height: 38px; border-radius: 4px;">
-              </div>
-              <div>
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">예정 시간대</label>
-                <select class="filter-ctrl" id="inpSchedTime" style="width: 100%; height: 38px; border-radius: 4px;">
-                  <option value="오전 10:00">오전 10:00 (식사/약 복용 확인)</option>
-                  <option value="오후 14:00">오후 14:00 (정례 오후 순찰)</option>
-                  <option value="오후 16:30">오후 16:30 (야간 대비 안부)</option>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">수혜 대상 어르신 검색 및 선택 <span style="color:#dc2626;">*</span></label>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                  <input type="text" class="filter-ctrl" id="inpSchedTargetSearch" placeholder="어르신 성명 또는 관리번호(UID) 검색..." style="flex: 1; height: 36px; border-radius: 4px; font-size: 12px;">
+                  <button type="button" class="btn-action secondary" id="btnResetSchedTargetSearch" style="padding: 0 12px; height: 36px; font-size: 11.5px; white-space: nowrap;">초기화</button>
+                </div>
+                <select class="filter-ctrl" id="inpSchedTargetSelect" style="width: 100%; height: 38px; border-radius: 4px;">
+                  ${targetOptions}
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">담당 참여자 <span style="color:#dc2626;">*</span></label>
-              <select class="filter-ctrl" id="inpSchedWorkerSelect" style="width: 100%; height: 38px; border-radius: 4px;">
-                ${workerOptions}
-              </select>
-            </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">예정 일자 <span style="color:#dc2626;">*</span></label>
+                  <input type="date" class="filter-ctrl" id="inpSchedDate" value="${todayStr}" style="width: 100%; height: 38px; border-radius: 4px;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">예정 시간대</label>
+                  <select class="filter-ctrl" id="inpSchedTime" style="width: 100%; height: 38px; border-radius: 4px;">
+                    <option value="오전 10:00">오전 10:00 (식사/약 복용 확인)</option>
+                    <option value="오후 14:00">오후 14:00 (정례 오후 순찰)</option>
+                    <option value="오후 16:30">오후 16:30 (야간 대비 안부)</option>
+                  </select>
+                </div>
+              </div>
 
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">사전 확인 메모</label>
-              <textarea class="filter-ctrl" id="inpSchedMemo" rows="3" placeholder="예: 영양 밑반찬 지원 및 복약 상태 확인" style="width: 100%; font-size: 12px; padding: 10px; resize: vertical; border-radius: 4px;"></textarea>
-            </div>
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">담당 참여자 <span style="color:#dc2626;">*</span></label>
+                <select class="filter-ctrl" id="inpSchedWorkerSelect" style="width: 100%; height: 38px; border-radius: 4px;">
+                  ${workerOptions}
+                </select>
+              </div>
 
-            <button type="button" class="btn-action primary" id="btnSubmitSchedForm" style="background: #0f172a; font-weight: 800; padding: 11px; width: 100%; margin-top: 6px;">
-              일정 등록 완료
-            </button>
-          </div>
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">사전 확인 메모</label>
+                <textarea class="filter-ctrl" id="inpSchedMemo" rows="3" placeholder="예: 영양 밑반찬 지원 및 복약 상태 확인" style="width: 100%; font-size: 12px; padding: 10px; resize: vertical; border-radius: 4px;"></textarea>
+              </div>
+
+              <button type="button" class="btn-action primary" id="btnSubmitSchedForm" style="background: #0f172a; font-weight: 800; padding: 11px; width: 100%; margin-top: 6px;" ${!canWriteThisBu ? 'disabled' : ''}>
+                ${canWriteThisBu ? '일정 등록 완료' : '등록 권한 없음 (읽기 전용 계정)'}
+              </button>
+            </div>
+          </fieldset>
         </div>
 
         <!-- 우측: 등록된 활동 일정 목록 -->
@@ -890,6 +903,11 @@ export class BuManagePane {
     const btnSubmit = document.getElementById('btnSubmitSchedForm');
     if (btnSubmit) {
       btnSubmit.onclick = async () => {
+        if (!RbacService.canWriteBu(bu.code)) {
+          notifier.toast(`[${bu.name}] 일정 등록 권한이 없습니다. (타 사업단 읽기 전용)`, 'warning');
+          return;
+        }
+
         const targetUid = document.getElementById('inpSchedTargetSelect')?.value;
         const date = document.getElementById('inpSchedDate')?.value;
         const time = document.getElementById('inpSchedTime')?.value;
@@ -918,7 +936,10 @@ export class BuManagePane {
         try {
           const resp = await fetch(`/api/v1/business-units/${encodeURIComponent(bu.code)}/activities`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-bu': RbacService.getAssignedBu()
+            },
             body: JSON.stringify({
               targetUid,
               targetName,
@@ -959,13 +980,21 @@ export class BuManagePane {
     // 일정 삭제 이벤트 (D1 Master 직결)
     pane.querySelectorAll('.btn-delete-bu-sched').forEach(btn => {
       btn.onclick = async (e) => {
+        if (!RbacService.canWriteBu(bu.code)) {
+          notifier.toast(`[${bu.name}] 일정 삭제 권한이 없습니다. (타 사업단 읽기 전용)`, 'warning');
+          return;
+        }
+
         const actId = e.currentTarget.dataset.actId;
         if (!actId) return;
 
         if (confirm(`해당 사업단 활동 일정 [${actId}]을 삭제하시겠습니까?`)) {
           try {
             const resp = await fetch(`/api/v1/activities/${encodeURIComponent(actId)}`, {
-              method: 'DELETE'
+              method: 'DELETE',
+              headers: {
+                'x-admin-bu': RbacService.getAssignedBu()
+              }
             });
             if (resp.ok) {
               notifier.toast('일정이 D1 원장에서 삭제되었습니다.', 'info');

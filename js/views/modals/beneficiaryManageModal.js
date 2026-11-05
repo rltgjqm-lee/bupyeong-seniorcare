@@ -12,6 +12,7 @@
 
 import { notifier } from '../../utils/notifier.js';
 import { UidEngine } from '../../core/uid.js';
+import { RbacService } from '../../services/rbacService.js';
 
 export class BeneficiaryManageModal {
   constructor(options = {}) {
@@ -170,8 +171,26 @@ export class BeneficiaryManageModal {
     const periodEl = document.getElementById('beneHistTargetPeriod');
 
     const c = this.currentCase;
-    if (nameEl) nameEl.textContent = c.name || '대상자';
-    if (metaEl) metaEl.textContent = `(${c.gender || '남'}/${c.age || 75}세, ${c.address || ''})`;
+    const canWrite = RbacService.canWriteTarget(c);
+
+    if (nameEl) {
+      if (canWrite) {
+        nameEl.textContent = c.name || '대상자';
+      } else {
+        // 타 사업단 대상자: 성명 마스킹 (예: 김*수)
+        const rawName = c.name || '대상자';
+        nameEl.textContent = rawName.length <= 2 ? rawName[0] + '*' : rawName[0] + '*' + rawName.slice(2);
+      }
+    }
+
+    if (metaEl) {
+      if (canWrite) {
+        metaEl.textContent = `(${c.gender || '남'}/${c.age || 75}세, ${c.address || ''})`;
+      } else {
+        // 타 사업단 대상자: 주소 마스킹
+        metaEl.textContent = `(${c.gender || '남'}/${c.age || 75}세, 부평구 ***)`;
+      }
+    }
     if (uidEl) uidEl.textContent = c.uid;
 
     const GRADE_MAP = {
@@ -184,9 +203,26 @@ export class BeneficiaryManageModal {
 
     if (gradeEl) {
       gradeEl.className = `grade-pill ${c.grade || 'high'}`;
-      gradeEl.textContent = gInfo.text;
+      gradeEl.textContent = canWrite ? gInfo.text : `${gInfo.text} (타 사업단 열람)`;
     }
     if (periodEl) periodEl.textContent = gInfo.period;
+
+    // 저장 버튼들 가드 적용
+    const btnSave = document.getElementById('btnBeneHistSave');
+    if (btnSave) {
+      btnSave.disabled = !canWrite;
+      btnSave.style.opacity = canWrite ? '1' : '0.5';
+      btnSave.style.cursor = canWrite ? 'pointer' : 'not-allowed';
+      btnSave.title = canWrite ? '일정 및 카드 저장' : '타 사업단 연계 대상자 (읽기 전용)';
+    }
+
+    const btnStartCall = document.getElementById('btnBeneStartCallCard');
+    if (btnStartCall) {
+      btnStartCall.disabled = !canWrite;
+      btnStartCall.style.opacity = canWrite ? '1' : '0.5';
+      btnStartCall.style.cursor = canWrite ? 'pointer' : 'not-allowed';
+      btnStartCall.title = canWrite ? '비대면 상담카드 작성' : '타 사업단 연계 대상자 (읽기 전용)';
+    }
   }
 
   async renderPastSchedules() {
@@ -564,6 +600,11 @@ export class BeneficiaryManageModal {
   async handleSaveCallCard() {
     if (!this.currentCase) return;
 
+    if (!RbacService.canWriteTarget(this.currentCase)) {
+      notifier.toast('타 사업단 전담 대상자는 상담카드를 저장할 수 없습니다. (읽기 전용)', 'warning');
+      return;
+    }
+
     const checkDate = document.getElementById('inpTab5CallDate')?.value;
     const healthCheck = document.querySelector('input[name="tab5Health"]:checked')?.value || '양호';
     const healthNote = document.getElementById('inpTab5HealthNote')?.value.trim();
@@ -605,7 +646,10 @@ export class BeneficiaryManageModal {
     try {
       await fetch('/api/v1/monitoring-cards', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-bu': RbacService.getAssignedBu()
+        },
         body: JSON.stringify({
           cardUid,
           caseUid: this.currentCase.uid,
@@ -697,6 +741,11 @@ export class BeneficiaryManageModal {
   async handleSave() {
     if (!this.currentCase) return;
 
+    if (!RbacService.canWriteTarget(this.currentCase)) {
+      notifier.toast('타 사업단 전담 대상자는 일정/관리카드를 저장할 수 없습니다. (읽기 전용)', 'warning');
+      return;
+    }
+
     const nextDate = document.getElementById('inpNextScheduleDate')?.value;
     const nextMethod = document.querySelector('input[name="nextScheduleMethod"]:checked')?.value || '방문';
     const nextTime = document.getElementById('selNextScheduleTime')?.value || '오전 10:00';
@@ -749,7 +798,10 @@ export class BeneficiaryManageModal {
     try {
       await fetch('/api/v1/monitoring-cards', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-bu': RbacService.getAssignedBu()
+        },
         body: JSON.stringify(payload)
       });
     } catch (e) {

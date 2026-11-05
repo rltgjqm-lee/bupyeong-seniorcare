@@ -134,6 +134,60 @@
       sessionStorage.setItem('bupyeong_admin_auth', 'true');
       sessionStorage.setItem('wellrisk_admin_auth', 'true');
       sessionStorage.setItem('bupyeong_admin_id', idInput);
+      sessionStorage.setItem('wellrisk_admin_user', idInput);
+      sessionStorage.setItem('wellrisk_admin_role', 'SUPER_ADMIN');
+      sessionStorage.setItem('wellrisk_admin_bu', 'ALL');
+      sessionStorage.setItem('wellrisk_admin_permissions', 'READ_WRITE');
+      sessionStorage.setItem('wellrisk_admin_can_export', '1');
+      sessionStorage.setItem('wellrisk_admin_can_unmask', '1');
+      sessionStorage.setItem('bupyeong_org_uid', 'O-28-237-01');
+      sessionStorage.setItem('bupyeong_org_name', '부평구 노인인력개발센터');
+      window.location.replace('/pages/org-admin.html');
+    } else if (idInput === 'bu_me' && pwInput === 'admin1234') {
+      // 식사지원(ME) 사업단 전담 관리자
+      sessionStorage.setItem('bupyeong_admin_auth', 'true');
+      sessionStorage.setItem('wellrisk_admin_auth', 'true');
+      sessionStorage.setItem('bupyeong_admin_id', idInput);
+      sessionStorage.setItem('wellrisk_admin_user', 'bu_me@bupyeong.care');
+      sessionStorage.setItem('wellrisk_admin_role', 'ORG_ADMIN');
+      sessionStorage.setItem('wellrisk_admin_bu', 'ME');
+      sessionStorage.setItem('wellrisk_admin_permissions', 'READ_WRITE');
+      sessionStorage.setItem('bupyeong_org_uid', 'O-28-237-01');
+      sessionStorage.setItem('bupyeong_org_name', '부평구 노인인력개발센터');
+      window.location.replace('/pages/org-admin.html');
+    } else if (idInput === 'bu_he' && pwInput === 'admin1234') {
+      // 건강음료(HE) 사업단 전담 관리자
+      sessionStorage.setItem('bupyeong_admin_auth', 'true');
+      sessionStorage.setItem('wellrisk_admin_auth', 'true');
+      sessionStorage.setItem('bupyeong_admin_id', idInput);
+      sessionStorage.setItem('wellrisk_admin_user', 'bu_he@bupyeong.care');
+      sessionStorage.setItem('wellrisk_admin_role', 'ORG_ADMIN');
+      sessionStorage.setItem('wellrisk_admin_bu', 'HE');
+      sessionStorage.setItem('wellrisk_admin_permissions', 'READ_WRITE');
+      sessionStorage.setItem('bupyeong_org_uid', 'O-28-237-01');
+      sessionStorage.setItem('bupyeong_org_name', '부평구 노인인력개발센터');
+      window.location.replace('/pages/org-admin.html');
+    } else if (idInput === 'bu_cl' && pwInput === 'admin1234') {
+      // 주거개선(CL) 사업단 전담 관리자
+      sessionStorage.setItem('bupyeong_admin_auth', 'true');
+      sessionStorage.setItem('wellrisk_admin_auth', 'true');
+      sessionStorage.setItem('bupyeong_admin_id', idInput);
+      sessionStorage.setItem('wellrisk_admin_user', 'bu_cl@bupyeong.care');
+      sessionStorage.setItem('wellrisk_admin_role', 'ORG_ADMIN');
+      sessionStorage.setItem('wellrisk_admin_bu', 'CL');
+      sessionStorage.setItem('wellrisk_admin_permissions', 'READ_WRITE');
+      sessionStorage.setItem('bupyeong_org_uid', 'O-28-237-01');
+      sessionStorage.setItem('bupyeong_org_name', '부평구 노인인력개발센터');
+      window.location.replace('/pages/org-admin.html');
+    } else if (idInput === 'bu_em' && pwInput === 'admin1234') {
+      // 정서이웃(EM) 사업단 전담 관리자
+      sessionStorage.setItem('bupyeong_admin_auth', 'true');
+      sessionStorage.setItem('wellrisk_admin_auth', 'true');
+      sessionStorage.setItem('bupyeong_admin_id', idInput);
+      sessionStorage.setItem('wellrisk_admin_user', 'bu_em@bupyeong.care');
+      sessionStorage.setItem('wellrisk_admin_role', 'ORG_ADMIN');
+      sessionStorage.setItem('wellrisk_admin_bu', 'EM');
+      sessionStorage.setItem('wellrisk_admin_permissions', 'READ_WRITE');
       sessionStorage.setItem('bupyeong_org_uid', 'O-28-237-01');
       sessionStorage.setItem('bupyeong_org_name', '부평구 노인인력개발센터');
       window.location.replace('/pages/org-admin.html');

@@ -15,7 +15,9 @@ export class RbacService {
    * 현재 로그인된 관리자 권한 정보 반환
    * @returns {{
    *   uid: string,
+   *   user: string,
    *   role: string,
+   *   assignedBuCode: string,
    *   permissions: string,
    *   canExportExcel: boolean,
    *   canUnmask: boolean
@@ -28,6 +30,7 @@ export class RbacService {
     const canExport = storage.getItem('wellrisk_admin_can_export');
     const canUnmask = storage.getItem('wellrisk_admin_can_unmask');
     const user = storage.getItem('wellrisk_admin_user') || 'wellrisk@wellrisk.com';
+    const assignedBuCode = storage.getItem('wellrisk_admin_bu') || 'ALL';
 
     // 총괄 관리자(SUPER_ADMIN) 또는 기본 센터장 계정은 전권 보유
     const isMaster = (role === 'SUPER_ADMIN' || user === 'wellrisk@wellrisk.com');
@@ -36,6 +39,7 @@ export class RbacService {
       uid: storage.getItem('wellrisk_admin_uid') || (isMaster ? 'A-28-260-01-01' : ''),
       user,
       role,
+      assignedBuCode: isMaster ? 'ALL' : assignedBuCode,
       permissions: isMaster ? PermissionType.READ_WRITE : permissions,
       canExportExcel: isMaster ? true : (canExport === '1' || canExport === 'true'),
       canUnmask: isMaster ? true : (canUnmask === '1' || canUnmask === 'true')
@@ -56,6 +60,9 @@ export class RbacService {
     }
     const perm = admin.permissions || PermissionType.READ_WRITE;
     storage.setItem('wellrisk_admin_permissions', perm);
+
+    const bu = admin.assigned_bu_code || admin.assignedBuCode || admin.bu_code || 'ALL';
+    storage.setItem('wellrisk_admin_bu', bu);
 
     const canExp = (admin.can_export_excel === 1 || admin.can_export_excel === true || admin.canExportExcel === true) ? '1' : '0';
     storage.setItem('wellrisk_admin_can_export', canExp);
@@ -80,6 +87,47 @@ export class RbacService {
   static canWrite() {
     const s = this.getCurrentSession();
     return s.permissions === PermissionType.WRITE || s.permissions === PermissionType.READ_WRITE;
+  }
+
+  /**
+   * 현재 관리자 소속 사업단 코드 반환
+   * @returns {'ALL' | 'ME' | 'HE' | 'CL' | 'EM'}
+   */
+  static getAssignedBu() {
+    return this.getCurrentSession().assignedBuCode;
+  }
+
+  /**
+   * 특정 사업단(buCode)에 대한 쓰기/등록/삭제 권한 검증 (Data Scope RBAC)
+   * @param {string} buCode - 'ME' | 'HE' | 'CL' | 'EM'
+   * @returns {boolean}
+   */
+  static canWriteBu(buCode) {
+    if (!this.canWrite()) return false;
+    const assigned = this.getAssignedBu();
+    if (assigned === 'ALL') return true;
+    return assigned === buCode;
+  }
+
+  /**
+   * 특정 대상자(targetCase)에 대한 쓰기/수정/관리카드 등록 권한 검증 (Data Scope RBAC)
+   * @param {Object} targetCase
+   * @returns {boolean}
+   */
+  static canWriteTarget(targetCase) {
+    if (!this.canWrite()) return false;
+    const assigned = this.getAssignedBu();
+    if (assigned === 'ALL') return true;
+    if (!targetCase) return false;
+
+    const buList = targetCase.buList || targetCase.bu_list || [];
+    if (Array.isArray(buList)) {
+      return buList.some(b => String(b).includes(assigned));
+    }
+    if (typeof buList === 'string') {
+      return buList.includes(assigned);
+    }
+    return false;
   }
 
   /**
