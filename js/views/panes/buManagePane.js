@@ -11,6 +11,7 @@ import { notifier } from '../../utils/notifier.js';
 import { OrgAdminApi } from '../../api/orgAdminApi.js';
 import { RbacService } from '../../services/rbacService.js';
 import { getLocalTodayString } from '../../utils/date.js';
+import { BUPYEONG_INITIAL_INSPECTORS } from './inspectorsPane.js';
 
 export const INITIAL_BUSINESS_UNITS = [
   {
@@ -76,6 +77,7 @@ export class BuManagePane {
       pageSize: 10
     };
     this.selectedActIds = new Set();
+    this.hideActUid = false; // 기본값: 관리번호 보임 (체크 시 숨김)
   }
 
   async mount(containerEl, options = {}) {
@@ -106,13 +108,13 @@ export class BuManagePane {
         list = [];
       }
     }
-    if (!list || list.length === 0) {
-      list = [
-        { seq_number: 1, uid: 'U-28-237-01-GD-001', name: '박영희', login_id: 'user_001', phone: '010-3829-1029', team_code: '1조', assigned_areas: '가좌1동, 가좌2동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '현장방문', status: '활동중' },
-        { seq_number: 2, uid: 'U-28-237-01-GD-002', name: '김철수', login_id: 'user_002', phone: '010-9182-3849', team_code: '1조', assigned_areas: '가좌1동, 가좌2동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '배정·검수', status: '활동중' },
-        { seq_number: 3, uid: 'U-28-237-01-GD-003', name: '이순신', login_id: 'user_003', phone: '010-5829-4820', team_code: '2조', assigned_areas: '석남1동, 석남2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '현장방문', status: '활동중' },
-        { seq_number: 4, uid: 'U-28-237-01-GD-004', name: '강감찬', login_id: 'user_004', phone: '010-8291-0029', team_code: '2조', assigned_areas: '석남1동, 석남2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '배정·검수', status: '활동중' }
-      ];
+    const hasLegacy = !list || list.length === 0 || list.some(i => {
+      const u = i.uid || i.participant_uid || '';
+      return u.includes('GD') || (i.assigned_areas || '').includes('가좌') || (!u.includes('-ME-') && !u.includes('-HE-')) || !i.bu_name;
+    });
+    if (hasLegacy) {
+      list = BUPYEONG_INITIAL_INSPECTORS;
+      localStorage.setItem('wrk_inspectors_list', JSON.stringify(list));
     }
     this.inspectors = list;
     return this.inspectors;
@@ -532,24 +534,29 @@ export class BuManagePane {
 
         const seq = idx + 1;
         const name = rawName;
-        const loginId = matched ? (matched.login_id || matched.loginId || `user_${String(seq).padStart(3, '0')}`) : '-';
+        // D1 표준 UID 강제 적용: 사업단 코드가 포함된 정규 계층형 UID (U-28-237-01-{BU}-{순번3})
+        let uid = (matched?.participant_uid || matched?.uid || '').trim();
+        if (!uid || !uid.includes(`-${bu.code}-`)) {
+          uid = `U-28-237-01-${bu.code}-${String(seq).padStart(3, '0')}`;
+        }
         const phone = matched ? (matched.phone || matched.phoneMasked || '010-****-0000') : '-';
         const pair = matched ? (matched.team_code || matched.pair || '1조') : (wEntry.includes('조') ? wEntry : '미배정');
-        const area = matched ? (matched.assigned_areas || matched.area || '부평구 관내') : '부평구 관내';
+        const rawArea = matched ? (matched.assigned_areas || matched.area || '부평1·2동, 삼산동') : '부평1·2동, 삼산동';
+        const area = (rawArea.includes('가좌') || rawArea.includes('석남')) ? '부평1·2동, 삼산동' : rawArea;
         const duty = matched ? `${matched.duty_days || '월,수,금'} (${matched.duty_hours || '09:00~12:00'})` : '정례 활동';
         const status = matched ? (matched.status || '활동중') : '활동중';
 
         return `
           <tr>
             <td style="text-align: center; font-weight: 700; color: #64748b;">${seq}</td>
+            <td style="text-align: center; font-family: monospace; font-weight: 700; color: #0f172a; white-space: nowrap;">${uid}</td>
             <td style="white-space: nowrap;">
               <strong style="color: #0f172a; font-size: 13px;">${name}</strong>
-              <span style="font-size: 11px; color: #64748b; font-family: monospace; margin-left: 2px;">(${loginId})</span>
             </td>
-            <td style="color: #475569; font-size: 12.5px;">${phone}</td>
-            <td style="font-weight: 600; color: #0f172a;">${pair}</td>
+            <td style="color: #475569; font-size: 12.5px; text-align: center; font-family: monospace;">${phone}</td>
+            <td style="font-weight: 600; color: #0f172a; text-align: center;">${pair}</td>
             <td style="color: #475569; font-size: 12px;">${area}</td>
-            <td style="color: #64748b; font-size: 11.5px;">${duty}</td>
+            <td style="color: #64748b; font-size: 11.5px; text-align: center;">${duty}</td>
             <td style="text-align: center;">
               <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;">${status}</span>
             </td>
@@ -584,8 +591,16 @@ export class BuManagePane {
         <!-- 기존 참여자 사업단 배정 바 -->
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-size: 12px; font-weight: 700; color: #334155;">기존 등록된 참여자를 본 사업단에 배정:</span>
-          <select class="filter-ctrl" id="selAssignExistingWorker" style="height: 34px; border-radius: 4px; min-width: 220px;">
-            ${this.inspectors.map(ins => `<option value="${ins.name}">${ins.name} (${ins.team_code || '1조'} / ${ins.phone || ''})</option>`).join('')}
+          <select class="filter-ctrl" id="selAssignExistingWorker" style="height: 34px; border-radius: 4px; min-width: 260px;">
+            ${this.inspectors.map(ins => {
+              const buCd = ins.bu_code || 'ME';
+              let insUid = (ins.participant_uid || ins.uid || '').trim();
+              if (!insUid || (!insUid.includes('-ME-') && !insUid.includes('-HE-') && !insUid.includes('-CL-') && !insUid.includes('-EM-'))) {
+                insUid = `U-28-237-01-${buCd}-001`;
+              }
+              const buNm = ins.bu_name ? `[${ins.bu_name}] ` : '';
+              return `<option value="${ins.name}">${buNm}${ins.name} (${insUid} / ${ins.team_code || '1조'} / ${ins.phone || ''})</option>`;
+            }).join('')}
           </select>
           <button type="button" class="btn-action primary" id="btnDoAssignWorker" style="height: 34px; padding: 0 16px; font-size: 12px; font-weight: 700; background: #2563eb;">
             + 사업단 배정 추가
@@ -598,9 +613,10 @@ export class BuManagePane {
             <thead>
               <tr>
                 <th style="width: 50px;">연번</th>
-                <th style="width: 140px;">성명 (로그인ID)</th>
+                <th style="width: 150px;">참여자 식별번호(UID)</th>
+                <th style="width: 110px;">성명</th>
                 <th style="width: 130px;">연락처</th>
-                <th style="width: 120px;">담당 배정 조</th>
+                <th style="width: 130px;">담당 배정 조</th>
                 <th>담당 관할 구역</th>
                 <th style="width: 150px;">근무 요일/시간</th>
                 <th style="width: 80px;">상태</th>
@@ -680,7 +696,7 @@ export class BuManagePane {
    *      - 안부확인 방식(라디오) 제외
    *      - 용어 '담당 참여자' 준수
    */
-  renderScheduleSubpane() {
+  async renderScheduleSubpane() {
     const pane = document.getElementById('buSubpaneSchedule');
     if (!pane) return;
 
@@ -688,6 +704,19 @@ export class BuManagePane {
     if (!bu) return;
 
     const todayStr = new Date().toISOString().split('T')[0];
+
+    // D1 API에서 해당 사업단의 실시간 일정/활동 내역 조회
+    let d1Activities = [];
+    try {
+      const resp = await fetch(`/api/v1/business-units/${encodeURIComponent(bu.code)}/activities`);
+      if (resp.ok) {
+        const json = await resp.json();
+        d1Activities = json.activities || [];
+      }
+    } catch (e) {
+      console.warn('[buManagePane] D1 activities fetch error:', e);
+      d1Activities = bu.schedules || [];
+    }
 
     // 소속 참여자 옵션 목록
     let workerOptions = '<option value="">-- 담당 참여자 선택 --</option>';
@@ -707,7 +736,7 @@ export class BuManagePane {
 
     // 등록된 일정 리스트
     let scheduleRowsHtml = '';
-    const schedList = bu.schedules || [];
+    const schedList = d1Activities.length > 0 ? d1Activities : (bu.schedules || []);
     if (schedList.length === 0) {
       scheduleRowsHtml = `
         <div style="text-align: center; color: #94a3b8; padding: 36px 12px; font-size: 12.5px;">
@@ -716,24 +745,29 @@ export class BuManagePane {
       `;
     } else {
       scheduleRowsHtml = schedList.map((sched, idx) => {
-        let title = '';
-        let details = '';
-
-        if (typeof sched === 'string') {
-          title = sched;
-          details = '정례 사업단 지원 일정';
-        } else {
-          title = `${sched.targetName} 어르신: ${sched.date} ${sched.time}`;
-          details = `담당 참여자: ${sched.worker} | 메모: ${sched.memo || '-'}`;
-        }
+        const schedId = sched.id || sched.activity_uid || `SCHED-${idx}`;
+        const targetNm = sched.targetName || sched.target_name || sched.targetUid;
+        const schedDate = sched.date || sched.activity_date || '';
+        const schedTime = sched.time || `${sched.start_time || ''} ~ ${sched.end_time || ''}`;
+        const workers = Array.isArray(sched.workerNames) ? sched.workerNames.join(', ') : (sched.worker || '담당 참여자');
+        const actContent = sched.content || sched.memo || sched.activityType || '정례 사업단 지원 서비스';
+        const isScheduled = sched.status === '예정';
 
         return `
-          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;">
             <div style="display: flex; flex-direction: column; gap: 3px;">
-              <div style="font-size: 13px; font-weight: 700; color: #0f172a;">${title}</div>
-              <div style="font-size: 11.5px; color: #64748b;">${details}</div>
+              <div style="font-size: 13px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 11px; padding: 2px 6px; border-radius: 3px; font-weight: 800; ${isScheduled ? 'background: #dcfce7; color: #15803d; border: 1px solid #86efac;' : 'background: #f1f5f9; color: #475569;'}">
+                  ${isScheduled ? '예정' : '완료'}
+                </span>
+                <strong>${targetNm} 어르신</strong>: ${schedDate} ${schedTime}
+                <span style="font-family: monospace; font-size: 10.5px; color: #94a3b8; font-weight: 500;">[${schedId}]</span>
+              </div>
+              <div style="font-size: 11.5px; color: #64748b;">
+                담당 참여자: <strong>${workers}</strong> | 내용: ${actContent}
+              </div>
             </div>
-            <button type="button" class="btn-action secondary btn-delete-bu-sched" data-sched-idx="${idx}" style="padding: 4px 10px; font-size: 11px; color: #dc2626; border-color: #fecaca; background: #fff;">
+            <button type="button" class="btn-action secondary btn-delete-bu-sched" data-act-id="${schedId}" style="padding: 4px 10px; font-size: 11px; color: #dc2626; border-color: #fecaca; background: #fff;">
               삭제
             </button>
           </div>
@@ -852,10 +886,10 @@ export class BuManagePane {
       };
     }
 
-    // 일정 등록 완료 이벤트
+    // 일정 등록 완료 이벤트 (D1 Master 직결 및 대상자 원장 실시간 동기화)
     const btnSubmit = document.getElementById('btnSubmitSchedForm');
     if (btnSubmit) {
-      btnSubmit.onclick = () => {
+      btnSubmit.onclick = async () => {
         const targetUid = document.getElementById('inpSchedTargetSelect')?.value;
         const date = document.getElementById('inpSchedDate')?.value;
         const time = document.getElementById('inpSchedTime')?.value;
@@ -877,33 +911,72 @@ export class BuManagePane {
 
         const target = this.cases.find(c => c.uid === targetUid);
         const targetName = target ? target.name : targetUid;
+        const targetAge = target ? target.age : 74;
+        const targetGender = target ? target.gender : '남';
 
-        if (!bu.schedules) bu.schedules = [];
-        bu.schedules.unshift({
-          id: 'SCHED-' + Date.now(),
-          targetUid,
-          targetName,
-          date,
-          time,
-          worker,
-          memo: memo || '정례 사업단 지원 서비스'
-        });
+        // 1. D1 bu_activities API로 활동 일정 영구 적재
+        try {
+          const resp = await fetch(`/api/v1/business-units/${encodeURIComponent(bu.code)}/activities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              targetUid,
+              targetName,
+              targetAge,
+              targetGender,
+              date,
+              time,
+              worker,
+              activityType: `${bu.name} 방문 서비스`,
+              memo: memo || '정례 사업단 지원 서비스'
+            })
+          });
 
-        localStorage.setItem('wrk_bu_list', JSON.stringify(this.buList));
-        notifier.toast(`[${targetName}] 어르신의 [${bu.name}] 일정이 등록되었습니다.`, 'success');
-        this.renderScheduleSubpane();
+          if (resp.ok) {
+            const result = await resp.json();
+            const actUid = result.activity?.id || 'ACT-28-237-01';
+
+            // 2. 대상자 마스터 객체 차기 일정 속성 즉시 동기화
+            if (target) {
+              target.nextScheduleDate = date;
+              target.nextScheduleTime = time;
+              target.nextScheduleInspector = worker;
+              target.nextScheduleBu = bu.code;
+            }
+
+            notifier.toast(`[${targetName}] 어르신의 [${bu.name}] 일정이 등록되었습니다. (${actUid})`, 'success');
+            await this.renderScheduleSubpane();
+          } else {
+            notifier.toast('일정 등록에 실패했습니다.', 'error');
+          }
+        } catch (err) {
+          console.error('[buManagePane] D1 일정 등록 에러:', err);
+          notifier.toast('서버 통신 오류가 발생했습니다.', 'error');
+        }
       };
     }
 
-    // 일정 삭제 이벤트
+    // 일정 삭제 이벤트 (D1 Master 직결)
     pane.querySelectorAll('.btn-delete-bu-sched').forEach(btn => {
-      btn.onclick = (e) => {
-        const idx = parseInt(e.currentTarget.dataset.schedIdx, 10);
-        if (confirm('해당 일정을 삭제하시겠습니까?')) {
-          bu.schedules.splice(idx, 1);
-          localStorage.setItem('wrk_bu_list', JSON.stringify(this.buList));
-          notifier.toast('일정이 삭제되었습니다.', 'info');
-          this.renderScheduleSubpane();
+      btn.onclick = async (e) => {
+        const actId = e.currentTarget.dataset.actId;
+        if (!actId) return;
+
+        if (confirm(`해당 사업단 활동 일정 [${actId}]을 삭제하시겠습니까?`)) {
+          try {
+            const resp = await fetch(`/api/v1/activities/${encodeURIComponent(actId)}`, {
+              method: 'DELETE'
+            });
+            if (resp.ok) {
+              notifier.toast('일정이 D1 원장에서 삭제되었습니다.', 'info');
+              await this.renderScheduleSubpane();
+            } else {
+              notifier.toast('일정 삭제에 실패했습니다.', 'error');
+            }
+          } catch (err) {
+            console.error('[buManagePane] D1 일정 삭제 에러:', err);
+            notifier.toast('서버 통신 오류가 발생했습니다.', 'error');
+          }
         }
       };
     });
@@ -1039,8 +1112,8 @@ export class BuManagePane {
           </div>
         </div>
 
-        <!-- 2. 필터 검색 바 & 상단 인쇄 버튼 -->
-        <div class="filter-search-bar" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <!-- 2. 필터 검색 바 -->
+        <div class="filter-search-bar" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
           <div class="filter-item">
             <span>진행상태:</span>
             <select class="filter-ctrl" id="selActStatusFilter" style="height: 34px;">
@@ -1061,15 +1134,29 @@ export class BuManagePane {
             <input type="date" class="filter-ctrl" id="inpActEndDate" style="height: 34px; width: 130px;">
           </div>
           <button type="button" class="btn-action secondary" id="btnResetActFilter" style="height: 34px; font-size: 12px;">초기화</button>
+        </div>
 
-          <!-- 상단 인쇄 버튼 그룹 -->
-          <div style="margin-left: auto; display: flex; gap: 6px;">
-            <button type="button" class="btn-action secondary" id="btnPrintSelectedActs" style="height: 34px; font-size: 12px; font-weight: 700;">선택 인쇄</button>
-            <button type="button" class="btn-action primary" id="btnPrintTodayActReport" style="height: 34px; font-size: 12px; font-weight: 700; background: #0f172a;">활동 보고서 인쇄</button>
+        <!-- 2-1. 금연점검 & 전사 v06 표준 상단 컨트롤 및 인쇄 액션 바 -->
+        <div class="action-buttons-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; color: #475569; font-weight: 600;">조회: <strong id="lblActFilteredCount" style="color: #0f172a;">${activities.length}</strong> 건</span>
+            <select id="selActTopPageSize" class="filter-ctrl" style="height: 30px; font-size: 12px; padding: 2px 8px; border-radius: 4px;">
+              <option value="10" ${this.actPagination.pageSize === 10 ? 'selected' : ''}>10개씩 보기</option>
+              <option value="20" ${this.actPagination.pageSize === 20 ? 'selected' : ''}>20개씩 보기</option>
+              <option value="50" ${this.actPagination.pageSize === 50 ? 'selected' : ''}>50개씩 보기</option>
+            </select>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #334155; font-weight: 600; cursor: pointer; user-select: none; margin-left: 4px;">
+              <input type="checkbox" id="chkTopHideTargetUid" ${this.hideActUid ? 'checked' : ''} style="width: 15px; height: 15px; cursor: pointer; accent-color: #0f172a;" />
+              <span>관리번호 숨김</span>
+            </label>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn-action secondary" id="btnPrintSelectedActs" style="height: 32px; font-size: 12px; font-weight: 700;">선택 인쇄</button>
+            <button type="button" class="btn-action primary" id="btnPrintTodayActReport" style="height: 32px; font-size: 12px; font-weight: 700; background: #0f172a;">활동 보고서 인쇄</button>
           </div>
         </div>
 
-        <!-- 3. 실시간 현장 활동 내역 테이블 -->
+        <!-- 3. 실시간 현장 활동 내역 테이블 (대상 어르신 / 관리번호 분리 컬럼) -->
         <div class="table-wrapper" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; overflow-x: auto;">
           <table class="admin-table">
             <thead>
@@ -1077,11 +1164,12 @@ export class BuManagePane {
                 <th style="width: 40px; text-align: center;"><input type="checkbox" id="chkAllBuActs"></th>
                 <th style="width: 50px;">순번</th>
                 <th style="width: 95px;">활동일자</th>
-                <th style="width: 170px;">대상 어르신 (관리번호)</th>
-                <th style="width: 130px;">담당 참여자</th>
+                <th style="width: 130px;">대상 어르신</th>
+                <th id="thBuActUidCol" style="width: 140px; ${this.hideActUid ? 'display: none;' : ''}">관리번호</th>
+                <th style="width: 120px;">담당 참여자</th>
                 <th>활동 유형</th>
-                <th style="width: 130px;">활동 시간(근태연동)</th>
-                <th style="width: 90px;">상태</th>
+                <th style="width: 120px;">활동 시간(근태연동)</th>
+                <th style="width: 85px;">상태</th>
                 <th style="width: 65px;">상세</th>
               </tr>
             </thead>
@@ -1143,10 +1231,23 @@ export class BuManagePane {
       // 하단 페이지네이션 바 렌더링
       this.renderActPagination(totalItems, totalPages, renderTable);
 
+      // 상단 조회 건수 동기화
+      const lblCount = document.getElementById('lblActFilteredCount');
+      if (lblCount) {
+        lblCount.textContent = totalItems;
+      }
+
+      // 테이블 헤더 '관리번호' 컬럼 숨김/보임 동기화
+      const thUidCol = document.getElementById('thBuActUidCol');
+      if (thUidCol) {
+        thUidCol.style.display = this.hideActUid ? 'none' : '';
+      }
+
       if (filtered.length === 0) {
+        const colSpan = this.hideActUid ? 9 : 10;
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" style="padding: 32px 0; color: #94a3b8; text-align: center;">
+            <td colspan="${colSpan}" style="padding: 32px 0; color: #94a3b8; text-align: center;">
               조건에 부합하는 현장 활동 내역이 없습니다.
             </td>
           </tr>
@@ -1171,6 +1272,9 @@ export class BuManagePane {
 
         const workerDisplay = Array.isArray(a.workerNames) ? a.workerNames.join(', ') : (a.workerNames || '-');
         const isChecked = this.selectedActIds.has(a.id);
+        const uidCell = this.hideActUid
+          ? ''
+          : `<td class="col-bu-act-uid" style="font-family: monospace; font-size: 11.5px; font-weight: 700; color: #0f172a; text-align: center;">${dispUid}</td>`;
 
         return `
           <tr style="border-bottom: 1px solid #f1f5f9;">
@@ -1180,9 +1284,10 @@ export class BuManagePane {
             <td style="color: #64748b; font-weight: 700; text-align: center;">${startIndex + idx + 1}</td>
             <td style="font-size: 11.5px; color: #0f172a; font-weight: 600;">${a.date}</td>
             <td>
-              <strong>${a.targetName}</strong>
-              <div style="font-family: monospace; font-size: 11px; color: #64748b; margin-top: 2px;">${dispUid}</div>
+              <strong style="color: #0f172a;">${a.targetName}</strong>
+              <span style="font-size: 11px; color: #64748b; margin-left: 2px;">(${a.targetGender || '미상'}/${a.targetAge || ''}세)</span>
             </td>
+            ${uidCell}
             <td style="font-size: 11.5px; color: #334155;">${workerDisplay}</td>
             <td style="font-size: 12px; color: #0f172a; text-align: left;">
               ${a.activityType}
@@ -1271,6 +1376,25 @@ export class BuManagePane {
       };
     }
 
+    // 상단 [보기 개수] 셀렉트 (금연점검 & v06 표준)
+    const selTopPageSize = document.getElementById('selActTopPageSize');
+    if (selTopPageSize) {
+      selTopPageSize.onchange = (e) => {
+        this.actPagination.pageSize = parseInt(e.target.value, 10);
+        this.actPagination.currentPage = 1;
+        renderTable();
+      };
+    }
+
+    // 상단 [관리번호 숨김] 체크박스 (금연점검 & v06 표준)
+    const chkTopHide = document.getElementById('chkTopHideTargetUid');
+    if (chkTopHide) {
+      chkTopHide.onchange = (e) => {
+        this.hideActUid = e.target.checked;
+        renderTable();
+      };
+    }
+
     // 상단 [선택 인쇄]
     if (btnPrintSelected) {
       btnPrintSelected.onclick = () => {
@@ -1328,17 +1452,10 @@ export class BuManagePane {
     }
 
     container.innerHTML = `
-      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 38px;">
-        <div style="position: absolute; left: 0; display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 12px; color: #64748b; font-weight: 600;">
-            전체 ${totalItems}건 중 ${startNum}-${endNum}건 표시
-          </span>
-          <select id="selBuActPageSize" class="filter-ctrl" style="height: 28px; font-size: 11.5px; padding: 2px 6px;">
-            <option value="10" ${pageSize === 10 ? 'selected' : ''}>10개씩 보기</option>
-            <option value="20" ${pageSize === 20 ? 'selected' : ''}>20개씩 보기</option>
-            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50개씩 보기</option>
-          </select>
-        </div>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 16px; width: 100%; min-height: 42px; margin: 12px 0;">
+        <span style="font-size: 12px; color: #64748b; font-weight: 600;">
+          총 <strong>${totalItems}</strong>건 (${startNum}~${endNum} 표시)
+        </span>
         <div class="table-pagination-nav" style="display: flex; align-items: center; gap: 4px;">
           <button type="button" class="page-btn" id="btnActPageFirst" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">«</button>
           <button type="button" class="page-btn" id="btnActPagePrev" ${currentPage === 1 ? 'disabled' : ''} style="min-width: 28px; height: 28px; font-size: 12px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 3px; cursor: pointer;">‹</button>
@@ -1348,15 +1465,6 @@ export class BuManagePane {
         </div>
       </div>
     `;
-
-    const selPageSize = container.querySelector('#selBuActPageSize');
-    if (selPageSize) {
-      selPageSize.onchange = (e) => {
-        this.actPagination.pageSize = parseInt(e.target.value, 10);
-        this.actPagination.currentPage = 1;
-        onPageChange();
-      };
-    }
 
     container.querySelectorAll('.page-btn[data-act-page]').forEach(btn => {
       btn.onclick = () => {

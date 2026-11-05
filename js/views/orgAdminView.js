@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file orgAdminView.js
  * @description 참여기관 관리자 포털 메인 컨트롤러 (5대 계층형 메뉴 & 우측 액션 기능 완비) (ESM)
  */
@@ -9,29 +9,29 @@ import { notifier } from '../utils/notifier.js';
 import { maskPhone, maskAddress, maskUid, maskName, maskBirth } from '../utils/mask.js';
 import { SurveyApi, SUBMITTED_SURVEYS_KEY } from '../api/surveyApi.js';
 import { OrgAdminApi } from '../api/orgAdminApi.js';
-import { OrgBasicPane } from './panes/orgBasicPane.js';
-import { AdminsPane } from './panes/adminsPane.js';
-import { InspectorsPane } from './panes/inspectorsPane.js';
-import { MyInfoPane } from './panes/myInfoPane.js';
-import { TargetListPane } from './panes/targetListPane.js';
-import { TargetMapPane } from './panes/targetMapPane.js';
-import { TargetCreatePane } from './panes/targetCreatePane.js';
-import { SchedulePane } from './panes/schedulePane.js';
-import { BuLinkPane } from './panes/buLinkPane.js';
-import { BuManagePane } from './panes/buManagePane.js';
-import { StatsAndFormsPane } from './panes/statsAndFormsPane.js';
-import { AuditLogPane } from './panes/auditLogPane.js';
-import { BeneficiaryCardsPane } from './panes/beneficiaryCardsPane.js';
-import { InspectionReviewModal } from './modals/inspectionReviewModal.js';
+import { OrgBasicPane } from './panes/orgBasicPane.js?v=3.9.33';
+import { AdminsPane } from './panes/adminsPane.js?v=3.9.33';
+import { InspectorsPane } from './panes/inspectorsPane.js?v=3.9.33';
+import { MyInfoPane } from './panes/myInfoPane.js?v=3.9.33';
+import { TargetListPane } from './panes/targetListPane.js?v=3.9.33';
+import { TargetMapPane } from './panes/targetMapPane.js?v=3.9.33';
+import { TargetCreatePane } from './panes/targetCreatePane.js?v=3.9.33';
+import { SchedulePane } from './panes/schedulePane.js?v=3.9.33';
+import { BuLinkPane } from './panes/buLinkPane.js?v=3.9.33';
+import { BuManagePane } from './panes/buManagePane.js?v=3.9.33';
+import { StatsAndFormsPane } from './panes/statsAndFormsPane.js?v=3.9.33';
+import { AuditLogPane } from './panes/auditLogPane.js?v=3.9.33';
+import { BeneficiaryCardsPane } from './panes/beneficiaryCardsPane.js?v=3.9.33';
+import { InspectionReviewModal } from './modals/inspectionReviewModal.js?v=3.9.33';
 import { RbacService } from '../services/rbacService.js';
 
-export const SEOGU_ADMIN_DONGS = [
-  "가좌1동", "가좌2동", "가좌3동", "가좌4동",
-  "검단동", "검암경서동", "당하동", "마전동",
-  "불로대곡동", "석남1동", "석남2동", "석남3동",
-  "신현원창동", "아라동", "연희동", "오류왕길동",
-  "원당동", "청라1동", "청라2동", "청라3동",
-  "가좌1·2동", "석남1·2·3동", "가정1·2·3동", "청라1·2·3동"
+export const BUPYEONG_ADMIN_DONGS = [
+  "부평1동", "부평2동", "부평3동", "부평4동", "부평5동", "부평6동",
+  "산곡1동", "산곡2동", "산곡3동", "산곡4동",
+  "청천1동", "청천2동", "갈산1동", "갈산2동",
+  "삼산1동", "삼산2동", "부개1동", "부개2동", "부개3동",
+  "일신동", "십정1동", "십정2동",
+  "부평1·2동", "부평4동", "삼산1·2동", "부개동"
 ];
 
 export { ADMIN_INITIAL_CASES } from './panes/targetListPane.js';
@@ -192,10 +192,10 @@ export class OrgAdminView {
 
   getDefaultInspectors() {
     return [
-      { uid: 'U-28-237-01-01', name: '박영희', phone: '010-3341-8891', pair: '1조 (김철수)', area: '가좌1·2동', type: '현장방문', status: '활동중' },
-      { uid: 'U-28-237-01-02', name: '김철수', phone: '010-4491-0092', pair: '1조 (박영희)', area: '가좌1·2동', type: '현장방문', status: '활동중' },
-      { uid: 'U-28-237-01-03', name: '이순신', phone: '010-8821-3301', pair: '2조 (강감찬)', area: '석남1·2·3동', type: '배정·검수', status: '활동중' },
-      { uid: 'U-28-237-01-04', name: '강감찬', phone: '010-7712-9904', pair: '2조 (이순신)', area: '석남1·2·3동', type: '배정·검수', status: '활동중' }
+      { uid: 'U-28-237-01-ME-001', participant_uid: 'U-28-237-01-ME-001', bu_code: 'ME', bu_name: '식사지원 사업단', name: '박영희', phone: '010-3829-8891', pair: '1조 (김철수)', team_code: '1조 (김철수)', area: '부평1동, 부평4동', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '현장방문', status: '활동중' },
+      { uid: 'U-28-237-01-ME-002', participant_uid: 'U-28-237-01-ME-002', bu_code: 'ME', bu_name: '식사지원 사업단', name: '김철수', phone: '010-9182-0092', pair: '1조 (박영희)', team_code: '1조 (박영희)', area: '부평1동, 부평4동', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '배정·검수', status: '활동중' },
+      { uid: 'U-28-237-01-HE-001', participant_uid: 'U-28-237-01-HE-001', bu_code: 'HE', bu_name: '건강음료 사업단', name: '이순신', phone: '010-5829-3301', pair: '2조 (강감찬)', team_code: '2조 (강감찬)', area: '삼산1동, 삼산2동', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '현장방문', status: '활동중' },
+      { uid: 'U-28-237-01-HE-002', participant_uid: 'U-28-237-01-HE-002', bu_code: 'HE', bu_name: '건강음료 사업단', name: '강감찬', phone: '010-8291-9904', pair: '2조 (이순신)', team_code: '2조 (이순신)', area: '삼산1동, 삼산2동', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '배정·검수', status: '활동중' }
     ];
   }
 

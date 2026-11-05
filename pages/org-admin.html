@@ -303,14 +303,16 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th style="width: 60px;">연번</th>
-                <th style="width: 120px;">성명</th>
-                <th style="width: 140px;">연락처</th>
+                <th style="width: 50px;">연번</th>
+                <th style="width: 160px;">참여자 식별번호(UID)</th>
+                <th style="width: 130px;">소속 사업단</th>
+                <th style="width: 100px;">성명</th>
+                <th style="width: 130px;">연락처</th>
                 <th style="width: 160px;">담당 배정 조 (페어)</th>
                 <th>담당 관할 구역</th>
                 <th style="width: 100px;">구분</th>
-                <th style="width: 90px;">상태</th>
-                <th style="width: 140px;">관리 (중지/삭제)</th>
+                <th style="width: 80px;">상태</th>
+                <th style="width: 130px;">관리 (중지/삭제)</th>
               </tr>
             </thead>
             <tbody id="tbodyInspectors">
@@ -1900,10 +1902,21 @@
             </div>
 
             <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">연계 지원 사업단 <span style="font-size: 11px; color: #2563eb; font-weight: 500;">(지정 시 해당 사업단 일정으로 자동 연동)</span></label>
+              <select class="filter-ctrl" id="selNextScheduleBu" style="width: 100%; height: 36px; font-weight: 600;">
+                <option value="NONE">-- 사업단 연계 없음 (기본 안부살핌단만 배정) --</option>
+                <option value="ME">[ME] 식사지원 사업단 (밑반찬·영양죽 배달)</option>
+                <option value="HE">[HE] 건강의료 사업단 (방문간호·혈압·투약)</option>
+                <option value="CL">[CL] 주거개선 사업단 (청소·방역·간단수리)</option>
+                <option value="EM">[EM] 정서이웃 사업단 (1:1 말벗·우울케어)</option>
+              </select>
+            </div>
+
+            <div>
               <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">담당 살핌단 (참여자)</label>
               <select class="filter-ctrl" id="selNextScheduleInspector" style="width: 100%; height: 36px;">
                 <option value="1조 (김조사, 박살핌)">1조 (김조사, 박살핌)</option>
-                <option value="2조 (이순신)">2조 (이순신)</option>
+                <option value="2조 (이순신, 강감찬)">2조 (이순신, 강감찬)</option>
               </select>
             </div>
 
@@ -2046,7 +2059,7 @@
 
 <!-- ESM Bootstrap -->
 <script type="module">
-  import { OrgAdminView } from '../js/views/orgAdminView.js?v=3.9.23';
+  import { OrgAdminView } from '../js/views/orgAdminView.js?v=3.9.33';
   window.addEventListener('DOMContentLoaded', () => {
     const admin = new OrgAdminView();
     window.admin = admin;

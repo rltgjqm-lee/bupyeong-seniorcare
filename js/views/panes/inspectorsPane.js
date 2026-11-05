@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file inspectorsPane.js
  * @description 참여기관 참여활동가(또래상담사/살핌단) 관리 서브 페인 모듈 (ESM)
  *              지자체 관리자(M) 및 전사 슈퍼 관리자(S) 공통 재사용 컴포넌트
@@ -9,6 +9,13 @@
  */
 
 import { notifier } from '../../utils/notifier.js';
+
+export const BUPYEONG_INITIAL_INSPECTORS = [
+  { seq_number: 1, uid: 'U-28-237-01-ME-001', participant_uid: 'U-28-237-01-ME-001', bu_code: 'ME', bu_name: '식사지원 사업단', name: '박영희', phone: '010-3829-8891', team_code: '1조 (김철수)', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '현장방문', status: '활동중', is_active: 1 },
+  { seq_number: 2, uid: 'U-28-237-01-ME-002', participant_uid: 'U-28-237-01-ME-002', bu_code: 'ME', bu_name: '식사지원 사업단', name: '김철수', phone: '010-9182-0092', team_code: '1조 (박영희)', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '배정·검수', status: '활동중', is_active: 1 },
+  { seq_number: 3, uid: 'U-28-237-01-HE-001', participant_uid: 'U-28-237-01-HE-001', bu_code: 'HE', bu_name: '건강음료 사업단', name: '이순신', phone: '010-5829-3301', team_code: '2조 (강감찬)', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '현장방문', status: '활동중', is_active: 1 },
+  { seq_number: 4, uid: 'U-28-237-01-HE-002', participant_uid: 'U-28-237-01-HE-002', bu_code: 'HE', bu_name: '건강음료 사업단', name: '강감찬', phone: '010-8291-9904', team_code: '2조 (이순신)', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '배정·검수', status: '활동중', is_active: 1 }
+];
 
 export class InspectorsPane {
   constructor(options = {}) {
@@ -62,15 +69,26 @@ export class InspectorsPane {
       console.warn('[InspectorsPane] D1 참여활동가 목록 조회 예외:', err);
     }
 
-    // 통신 오류 시 로컬스토리지 백업 데이터 활용
+    // 통신 오류 시 로컬스토리지 백업 데이터 활용 및 부평 표준 자동 정규화
     const saved = localStorage.getItem('wrk_inspectors_list');
+    let list = [];
     if (saved) {
       try {
-        this.inspectors = JSON.parse(saved);
+        list = JSON.parse(saved);
       } catch (e) {
-        this.inspectors = [];
+        list = [];
       }
     }
+    // 데이터가 없거나 레거시 'GD' 또는 서구 '가좌' 오염, 또는 사업단 코드가 빠진 구형 UID 감지 시 부평 표준 데이터로 정규화
+    const hasLegacyData = list.some(i => {
+      const u = i.uid || i.participant_uid || '';
+      return u.includes('GD') || (i.assigned_areas || '').includes('가좌') || (!u.includes('-ME-') && !u.includes('-HE-')) || !i.bu_name;
+    });
+    if (!list || list.length === 0 || hasLegacyData) {
+      list = BUPYEONG_INITIAL_INSPECTORS;
+      localStorage.setItem('wrk_inspectors_list', JSON.stringify(list));
+    }
+    this.inspectors = list;
     this.renderInspectors();
   }
 
@@ -94,7 +112,9 @@ export class InspectorsPane {
 
     tbody.innerHTML = this.inspectors.map((ins, idx) => {
       const seq = ins.seq_number || (idx + 1);
-      const uid = ins.participant_uid || ins.uid || `U-28-237-01-GD-${String(seq).padStart(3, '0')}`;
+      const buCode = ins.bu_code || (seq <= 2 ? 'ME' : 'HE');
+      const buName = ins.bu_name || (buCode === 'ME' ? '식사지원 사업단' : '건강음료 사업단');
+      const uid = ins.participant_uid || ins.uid || `U-28-237-01-${buCode}-${String(seq).padStart(3, '0')}`;
       const name = ins.name || '-';
       
       // 연락처 마스킹 처리 (010-****-8891)
@@ -111,7 +131,6 @@ export class InspectorsPane {
       }
       if (!phoneDisplay) phoneDisplay = '010-****-0000';
 
-      const loginId = ins.login_id || ins.loginId || `user_${String(seq).padStart(3, '0')}`;
       const pair = ins.team_code || ins.pair || '미배정';
       
       // 근무일·시간
@@ -122,12 +141,22 @@ export class InspectorsPane {
       const type = ins.team_role === '부' ? '배정·검수' : (ins.type || '현장방문');
       const status = ins.duty_status === 'SUSPENDED' ? '중지' : (ins.status || (ins.is_active === 0 ? '중지' : '활동중'));
 
+      const isMe = buCode === 'ME';
+      const buBadgeBg = isMe ? '#f0fdf4' : '#eff6ff';
+      const buBadgeColor = isMe ? '#166534' : '#1e40af';
+      const buBadgeBorder = isMe ? '#bbf7d0' : '#bfdbfe';
+
       return `
         <tr data-inspector-uid="${uid}">
           <td style="text-align: center; font-weight: 700; color: #64748b;">${seq}</td>
+          <td style="text-align: center; font-family: monospace; font-weight: 700; color: #0f172a; white-space: nowrap;">${uid}</td>
+          <td style="text-align: center; white-space: nowrap;">
+            <span style="display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; background: ${buBadgeBg}; color: ${buBadgeColor}; border: 1px solid ${buBadgeBorder};">
+              ${buName}
+            </span>
+          </td>
           <td style="white-space: nowrap;">
             <strong style="color: #0f172a; font-size: 13px;">${name}</strong>
-            <span style="font-size: 11px; color: #64748b; font-family: monospace; margin-left: 2px;">(${loginId})</span>
           </td>
           <td style="text-align: center; font-family: monospace; font-size: 12px; color: #334155; white-space: nowrap;">${phoneDisplay}</td>
           <td style="text-align: center; color: #1e293b; font-weight: 600; white-space: nowrap;" title="${pair}">${pair}</td>
@@ -678,9 +707,10 @@ export class InspectorsPane {
           item.duty_status = status === '중지' ? 'SUSPENDED' : 'ACTIVE';
         }
       } else {
-        const newUid = `U-28-237-01-GD-${String(this.inspectors.length + 1).padStart(3, '0')}`;
+        const newUid = `U-28-237-01-${String(this.inspectors.length + 1).padStart(3, '0')}`;
         this.inspectors.push({
           participant_uid: newUid,
+          uid: newUid,
           org_uid: this.orgUid,
           name,
           phone,

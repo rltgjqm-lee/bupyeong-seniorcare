@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file beneficiaryManageModal.js
  * @description 수혜자 관리카드 이력 조회 및 일정 관리 모달 모듈 (ESM)
  *              - 1번: 과거 일정 이력 (타임라인)
@@ -189,27 +189,74 @@ export class BeneficiaryManageModal {
     if (periodEl) periodEl.textContent = gInfo.period;
   }
 
-  renderPastSchedules() {
+  async renderPastSchedules() {
     const container = document.getElementById('beneHistScheduleListContainer');
     const countEl = document.getElementById('beneHistScheduleCount');
     if (!container) return;
 
-    if (countEl) countEl.textContent = `최근 ${this.currentCards.length}건`;
+    // 1. D1 사업단 연동 예정 스케줄 비동기 조회
+    let buSchedules = [];
+    if (this.currentCase?.uid) {
+      try {
+        const resp = await fetch(`/api/v1/cases/${encodeURIComponent(this.currentCase.uid)}/schedules`);
+        if (resp.ok) {
+          const data = await resp.json();
+          buSchedules = data.schedules || [];
+        }
+      } catch (e) {
+        console.warn('[BeneficiaryManageModal] fetch bu schedules error:', e);
+      }
+    }
 
-    if (this.currentCards.length === 0) {
+    const totalCount = this.currentCards.length + buSchedules.length;
+    if (countEl) countEl.textContent = `총 ${totalCount}건 (과거이력 ${this.currentCards.length}건, 사업단예정 ${buSchedules.length}건)`;
+
+    if (totalCount === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 36px 16px; color: #94a3b8; font-size: 13px;">
-          과거 안부확인 일정이 등록되어 있지 않습니다.
+          등록된 안부확인 및 사업단 활동 일정이 없습니다.
         </div>
       `;
       return;
     }
 
-    container.innerHTML = this.currentCards.map((crd, idx) => {
+    const BU_NAMES = {
+      ME: { name: '식사지원', color: '#1d4ed8', bg: '#eff6ff' },
+      HE: { name: '건강의료', color: '#15803d', bg: '#f0fdf4' },
+      CL: { name: '주거개선', color: '#c2410c', bg: '#fff7ed' },
+      EM: { name: '정서이웃', color: '#7e22ce', bg: '#faf5ff' }
+    };
+
+    // 사업단 예정 스케줄 HTML
+    const buSchedHtml = buSchedules.map(s => {
+      const bInfo = BU_NAMES[s.buCode || s.bu_code] || { name: s.buCode || '사업단', color: '#2563eb', bg: '#eff6ff' };
+      const workerStr = Array.isArray(s.workerNames) ? s.workerNames.join(', ') : (s.worker || '담당자');
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 6px; font-size: 12px; margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: 800; color: #15803d; font-size: 11px; background: #dcfce7; padding: 2px 6px; border-radius: 3px; border: 1px solid #bbf7d0;">
+              [예정]
+            </span>
+            <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: ${bInfo.color}; background: ${bInfo.bg}; border: 1px solid ${bInfo.color}30;">
+              ${bInfo.name} (${s.buCode || s.bu_code})
+            </span>
+            <span style="font-family: monospace; color: #0f172a; font-weight: 700;">${s.date || s.activity_date} ${s.time || ''}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <span style="color: #475569; font-size: 11.5px;">내용: <strong>${s.content || s.activityType || '방문 서비스'}</strong></span>
+            <span style="color: #0f172a; font-weight: 700; font-size: 11.5px;">${workerStr}</span>
+            <span style="font-family: monospace; font-size: 10px; color: #94a3b8;">${s.id || s.activity_uid || ''}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // 과거 안부확인 카드 이력 HTML
+    const pastCardsHtml = this.currentCards.map((crd, idx) => {
       const isVisit = crd.contact_method === '방문';
       const round = this.currentCards.length - idx;
       return `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; margin-bottom: 6px;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: 800; color: #0f172a; width: 36px;">${round}차</span>
             <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; ${isVisit ? 'color:#15803d; background:#dcfce7;' : 'color:#1d4ed8; background:#dbeafe;'}">
@@ -225,6 +272,8 @@ export class BeneficiaryManageModal {
         </div>
       `;
     }).join('');
+
+    container.innerHTML = buSchedHtml + pastCardsHtml;
   }
 
   populateCurrentStatus() {
@@ -618,6 +667,18 @@ export class BeneficiaryManageModal {
       selTime.value = c.nextScheduleTime;
     }
 
+    // 연계 사업단 셀렉트 기본값 세팅
+    const selBu = document.getElementById('selNextScheduleBu');
+    if (selBu) {
+      if (c.nextScheduleBu) {
+        selBu.value = c.nextScheduleBu;
+      } else if (c.buList && c.buList.length > 0) {
+        selBu.value = c.buList[0];
+      } else {
+        selBu.value = 'NONE';
+      }
+    }
+
     const selInspector = document.getElementById('selNextScheduleInspector');
     if (selInspector && (c.inspectors || c.nextScheduleInspector)) {
       const insText = c.nextScheduleInspector || (c.inspectors || []).join(', ');
@@ -639,6 +700,7 @@ export class BeneficiaryManageModal {
     const nextDate = document.getElementById('inpNextScheduleDate')?.value;
     const nextMethod = document.querySelector('input[name="nextScheduleMethod"]:checked')?.value || '방문';
     const nextTime = document.getElementById('selNextScheduleTime')?.value || '오전 10:00';
+    const nextBu = document.getElementById('selNextScheduleBu')?.value || 'NONE';
     const inspector = document.getElementById('selNextScheduleInspector')?.value || '1조 (김조사, 박살핌)';
     const nextMemo = document.getElementById('inpNextScheduleMemo')?.value.trim();
 
@@ -661,6 +723,9 @@ export class BeneficiaryManageModal {
     const payload = {
       cardUid,
       caseUid: this.currentCase.uid,
+      targetName: this.currentCase.name,
+      targetAge: this.currentCase.age || 74,
+      targetGender: this.currentCase.gender || '남',
       orgCode: 'O-28-237-01',
       participantUid: 'U-28-237-01-GD-001',
       contactMethod: nextMethod,
@@ -676,7 +741,9 @@ export class BeneficiaryManageModal {
       etcNote,
       nextDate,
       nextTime,
-      inspector
+      buCode: nextBu,
+      inspector,
+      nextMemo
     };
 
     try {
@@ -692,6 +759,7 @@ export class BeneficiaryManageModal {
     this.currentCase.nextScheduleDate = nextDate;
     this.currentCase.nextScheduleMethod = nextMethod;
     this.currentCase.nextScheduleTime = nextTime;
+    this.currentCase.nextScheduleBu = nextBu;
     this.currentCase.nextScheduleInspector = inspector;
     this.currentCase.nextScheduleMemo = nextMemo;
 

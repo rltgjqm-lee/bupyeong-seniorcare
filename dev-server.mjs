@@ -137,6 +137,26 @@ const server = http.createServer((req, res) => {
       return;
     }
 
+    // 2-B) D1 참여활동가 목록 조회: /api/v1/participants
+    if (pathname === '/api/v1/participants' && req.method === 'GET') {
+      const buFilter = parsedUrl.searchParams.get('buCode');
+      const bupyeongParticipants = [
+        { seq_number: 1, uid: 'U-28-237-01-ME-001', participant_uid: 'U-28-237-01-ME-001', org_uid: 'O-28-237-01', bu_uid: 'B-28-237-01-ME', bu_code: 'ME', bu_name: '식사지원 사업단', name: '박영희', phone: '010-3829-8891', phoneMasked: '010-****-8891', team_code: '1조 (김철수)', team_role: '정', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '현장방문', status: '활동중', is_active: 1 },
+        { seq_number: 2, uid: 'U-28-237-01-ME-002', participant_uid: 'U-28-237-01-ME-002', org_uid: 'O-28-237-01', bu_uid: 'B-28-237-01-ME', bu_code: 'ME', bu_name: '식사지원 사업단', name: '김철수', phone: '010-9182-0092', phoneMasked: '010-****-0092', team_code: '1조 (박영희)', team_role: '부', assigned_areas: '부평1동, 부평4동', duty_days: '월, 수, 금', duty_hours: '09:00 ~ 12:00', type: '배정·검수', status: '활동중', is_active: 1 },
+        { seq_number: 3, uid: 'U-28-237-01-HE-001', participant_uid: 'U-28-237-01-HE-001', org_uid: 'O-28-237-01', bu_uid: 'B-28-237-01-HE', bu_code: 'HE', bu_name: '건강음료 사업단', name: '이순신', phone: '010-5829-3301', phoneMasked: '010-****-3301', team_code: '2조 (강감찬)', team_role: '정', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '현장방문', status: '활동중', is_active: 1 },
+        { seq_number: 4, uid: 'U-28-237-01-HE-002', participant_uid: 'U-28-237-01-HE-002', org_uid: 'O-28-237-01', bu_uid: 'B-28-237-01-HE', bu_code: 'HE', bu_name: '건강음료 사업단', name: '강감찬', phone: '010-8291-9904', phoneMasked: '010-****-9904', team_code: '2조 (이순신)', team_role: '부', assigned_areas: '삼산1동, 삼산2동', duty_days: '화, 목', duty_hours: '13:00 ~ 16:00', type: '배정·검수', status: '활동중', is_active: 1 }
+      ];
+
+      const data = buFilter ? bupyeongParticipants.filter(p => p.bu_code === buFilter) : bupyeongParticipants;
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        data,
+        total: data.length
+      }));
+      return;
+    }
+
     // 3) 사업단별 실시간 현장 활동 내역 조회: /api/v1/business-units/:buCode/activities
     const buActMatch = pathname.match(/^\/api\/v1\/business-units\/([^/]+)\/activities$/);
     if (buActMatch && req.method === 'GET') {
@@ -271,6 +291,65 @@ const server = http.createServer((req, res) => {
       return;
     }
 
+    // 3-B) 사업단 신규 활동 및 방문 일정 등록: POST /api/v1/business-units/:buCode/activities
+    if (buActMatch && req.method === 'POST') {
+      const buCode = decodeURIComponent(buActMatch[1]);
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const actData = JSON.parse(body || '{}');
+          if (!global.activityStore) global.activityStore = [];
+
+          // 계층형 UID 생성: ACT-28-237-01-XXXX
+          const seq = global.activityStore.length + 1;
+          const actId = actData.id || `ACT-28-237-01-${String(seq).padStart(4, '0')}`;
+
+          const newActivity = {
+            id: actId,
+            activity_uid: actId,
+            org_uid: 'O-28-237-01',
+            buCode: buCode || actData.buCode || 'ME',
+            bu_code: buCode || actData.buCode || 'ME',
+            targetUid: actData.targetUid || actData.caseUid || 'C-28-237-01-K1001',
+            case_uid: actData.targetUid || actData.caseUid || 'C-28-237-01-K1001',
+            targetName: actData.targetName || '대상자',
+            targetAge: actData.targetAge || 74,
+            targetGender: actData.targetGender || '남',
+            date: actData.date || new Date().toISOString().slice(0, 10),
+            activity_date: actData.date || new Date().toISOString().slice(0, 10),
+            time: actData.time || '10:00 ~ 11:00',
+            start_time: (actData.time || '10:00').split('~')[0].trim(),
+            end_time: (actData.time || '11:00').split('~')[1]?.trim() || '11:00',
+            workerNames: Array.isArray(actData.workerNames) ? actData.workerNames : [actData.worker || '박영희, 김철수'],
+            activityType: actData.activityType || '정례 사업단 지원 서비스',
+            status: actData.status || '예정',
+            unmetReason: actData.unmetReason || '',
+            content: actData.content || actData.memo || '',
+            specialNotes: actData.specialNotes || '',
+            isConfirmed: false,
+            adminMemo: ''
+          };
+
+          global.activityStore.unshift(newActivity);
+
+          console.log(`[D1 Master] 신규 사업단 활동 일정 등록 완료 [${actId}] 대상자: ${newActivity.targetName} (${newActivity.buCode})`);
+
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: true,
+            message: '사업단 일정이 D1 원장에 성공적으로 등록되었습니다.',
+            activity: newActivity
+          }));
+        } catch (e) {
+          console.error('[dev-server POST activity error]:', e);
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, message: e.message || '잘못된 요청 규격입니다.' }));
+        }
+      });
+      return;
+    }
+
     // 4) 활동 확인 상태 업데이트: /api/v1/activities/:id
     const actUpdateMatch = pathname.match(/^\/api\/v1\/activities\/([^/]+)$/);
     if (actUpdateMatch && req.method === 'PUT') {
@@ -291,6 +370,98 @@ const server = http.createServer((req, res) => {
             success: true,
             message: '활동 확인 상태가 저장되었습니다.',
             activity: target || null
+          }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, message: '잘못된 요청입니다.' }));
+        }
+      });
+      return;
+    }
+
+    // 4-B) 활동 일정 삭제: DELETE /api/v1/activities/:id
+    if (actUpdateMatch && req.method === 'DELETE') {
+      const actId = decodeURIComponent(actUpdateMatch[1]);
+      if (global.activityStore) {
+        const idx = global.activityStore.findIndex(a => a.id === actId);
+        if (idx !== -1) {
+          global.activityStore.splice(idx, 1);
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        message: '활동 일정이 삭제되었습니다.',
+        id: actId
+      }));
+      return;
+    }
+
+    // 5) 수혜 대상자별 전체 통합 일정 조회: GET /api/v1/cases/:caseUid/schedules
+    const caseSchedMatch = pathname.match(/^\/api\/v1\/cases\/([^/]+)\/schedules$/);
+    if (caseSchedMatch && req.method === 'GET') {
+      const caseUid = decodeURIComponent(caseSchedMatch[1]);
+      const list = (global.activityStore || []).filter(a => a.targetUid === caseUid || a.case_uid === caseUid);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        caseUid,
+        total: list.length,
+        schedules: list
+      }));
+      return;
+    }
+
+    // 6) 수혜자 관리카드 안부확인 원장 저장: POST /api/v1/monitoring-cards
+    if (pathname === '/api/v1/monitoring-cards' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const cardData = JSON.parse(body || '{}');
+          if (!global.monitoringCardStore) global.monitoringCardStore = [];
+
+          global.monitoringCardStore.unshift(cardData);
+
+          // 만약 차기 예정일과 연계 사업단(buCode)이 지정된 경우, D1 bu_activities에도 예정 일정으로 자동 동시 적재
+          if (cardData.nextDate && cardData.buCode && cardData.buCode !== 'NONE') {
+            if (!global.activityStore) global.activityStore = [];
+            const seq = global.activityStore.length + 1;
+            const actId = `ACT-28-237-01-${String(seq).padStart(4, '0')}`;
+            const autoActivity = {
+              id: actId,
+              activity_uid: actId,
+              org_uid: 'O-28-237-01',
+              buCode: cardData.buCode,
+              bu_code: cardData.buCode,
+              targetUid: cardData.caseUid,
+              case_uid: cardData.caseUid,
+              targetName: cardData.targetName || '대상 어르신',
+              targetAge: cardData.targetAge || 74,
+              targetGender: cardData.targetGender || '남',
+              date: cardData.nextDate,
+              activity_date: cardData.nextDate,
+              time: cardData.nextTime || '10:00 ~ 11:00',
+              start_time: (cardData.nextTime || '10:00').split('~')[0].trim(),
+              end_time: (cardData.nextTime || '11:00').split('~')[1]?.trim() || '11:00',
+              workerNames: [cardData.inspector || '김조사, 박살핌'],
+              activityType: `${cardData.buCode} 사업단 맞춤 서비스`,
+              status: '예정',
+              unmetReason: '',
+              content: cardData.nextMemo || '수혜자 관리카드 차기 일정 세팅 연동',
+              specialNotes: `건강: [${cardData.healthCheck || '양호'}], 심리: [${cardData.psychoCheck || '안정'}]`,
+              isConfirmed: false,
+              adminMemo: '수혜자관리카드 자동 연동'
+            };
+            global.activityStore.unshift(autoActivity);
+            console.log(`[D1 Master] 관리카드 세팅 ➔ 사업단 활동 자동 등록 [${actId}] (${cardData.buCode})`);
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: true,
+            message: '수혜자 관리카드 및 차기 일정이 D1 원장에 저장되었습니다.',
+            cardUid: cardData.cardUid
           }));
         } catch (e) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });

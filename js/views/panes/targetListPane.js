@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file targetListPane.js
  * @description 참여기관 안부대상자 현황 및 실시간 모니터링 서브 페인 모듈 (ESM)
  *              지자체 관리자(M) 및 전사 슈퍼 관리자(S) 공통 재사용 컴포넌트
@@ -402,7 +402,7 @@ export class TargetListPane {
           <td style="font-family: monospace; font-size: 11.5px; text-align: center;">${c.date}</td>
           <td style="text-align: center;">${c.inspectors.join(', ')}</td>
           <td class="text-left" style="vertical-align: middle;">
-            <strong>${c.name}</strong> <span style="font-size: 11.5px; color: #64748b;">(*/${c.age}세)</span>
+            <strong>${c.name}</strong> <span style="font-size: 11.5px; color: #64748b;">(${c.gender || '남'}/${c.age}세)</span>
           </td>
           <td class="text-left">${c.address} <span style="font-size: 11px; color: #64748b;">(${c.living})</span></td>
           <td style="text-align: center;"><strong>${c.score}점</strong> <span style="font-size: 10px; color: #94a3b8;">/13</span></td>
@@ -552,6 +552,7 @@ export class TargetListPane {
     const latestRisk = riskList[0] || null;
 
     const dispName = info.displayName || c.name;
+    const dispGender = info.gender || c.gender || '남';
     const dispPhone = info.displayPhone || c.phone;
     const dispAddress = info.displayAddress || info.maskedAddress || maskAddress(c.address);
     const dispAge = info.age || c.age || 74;
@@ -580,7 +581,7 @@ export class TargetListPane {
       <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:14px; margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
           <div>
-            <strong style="font-size:14px; color:#0f172a;">${dispName} (*/${dispAge}세)</strong>
+            <strong style="font-size:14px; color:#0f172a;">${dispName} (${dispGender} / ${dispAge}세)</strong>
             <span style="font-size:11px; color:#64748b; margin-left:6px;">경제실태: ${dispEconomy}</span>
           </div>
           <span style="font-family:monospace; font-size:11.5px; font-weight:700; background:#0f172a; color:#fff; padding:2px 8px; border-radius:4px;">
@@ -646,11 +647,11 @@ export class TargetListPane {
         </div>
       </div>
 
-      <!-- 탭 2. S-GDS 우울증 검사 (15문항) (S-GDS Detail) -->
+      <!-- 탭 2. S-GDS 우울증 검사 (15문항 전수 임상 그리드) -->
       <div id="paneTabSgds" class="detail-tab-pane" style="display:none;">
         <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:14px; margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong style="font-size:13px; color:#0f172a;">단축형 노인 우울 척도 검사 (S-GDS Korea 15문항)</strong>
+            <strong style="font-size:13px; color:#0f172a;">단축형 노인 우울 척도 검사 (S-GDS Korea 15문항 전수)</strong>
             <span style="font-size:12px; font-weight:700; color:${sgdsGrade.color}; background:${sgdsGrade.bg}; border:1px solid ${sgdsGrade.color}40; padding:2px 8px; border-radius:3px;">
               총점 ${sgdsScore}점 / 15점 (${sgdsGrade.text})
             </span>
@@ -679,26 +680,52 @@ export class TargetListPane {
               <tr><td style="text-align:center;">Q8</td><td>자신이 무력하다고 느끼십니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">예</td><td style="text-align:center; font-weight:700;">1점</td></tr>
               <tr><td style="text-align:center;">Q9</td><td>외출하기보다 집에 있고 싶습니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">예</td><td style="text-align:center; font-weight:700;">1점</td></tr>
               <tr><td style="text-align:center;">Q10</td><td>기억력에 문제가 많다고 느끼십니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">예</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q11</td><td>지금 살아 있다는 사실이 아주 좋게 느껴지십니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">아니오</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q12</td><td>지금의 내 자신이 아무 쓸모없는 사람 같습니까?</td><td style="text-align:center; color:#16a34a; font-weight:700;">아니오</td><td style="text-align:center; font-weight:700;">0점</td></tr>
+              <tr><td style="text-align:center;">Q13</td><td>활기가 넘치십니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">아니오</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q14</td><td>지금 자신의 처지가 절망적이라고 느끼십니까?</td><td style="text-align:center; color:#dc2626; font-weight:700;">예</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q15</td><td>다른 사람들이 나보다 더 형편이 낫다고 생각하십니까?</td><td style="text-align:center; color:#16a34a; font-weight:700;">아니오</td><td style="text-align:center; font-weight:700;">0점</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- 탭 3. 게이트키퍼 고독사 진단 (10문항) & 관찰 지표 (Risk Detail) -->
+      <!-- 탭 3. 게이트키퍼 고독사 진단 (10문항 전수 심층 그리드) -->
       <div id="paneTabRisk" class="detail-tab-pane" style="display:none;">
         <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:14px; margin-bottom:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <strong style="font-size:13px; color:#0f172a;">고독사 예방 10문항 심층 진단</strong>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="font-size:13px; color:#0f172a;">고독사 예방 10문항 심층 진단 (특허 기반 10대 지표 전수)</strong>
             <span style="font-size:12px; font-weight:700; color:${riskGrade.color}; background:${riskGrade.bg}; border:1px solid ${riskGrade.color}40; padding:2px 8px; border-radius:3px;">
               총점 ${riskScore}점 / 13점 (${riskGrade.text})
             </span>
           </div>
-          <div style="font-size:12px; color:#334155; line-height:1.6; margin-bottom:10px;">
-            • <strong>진단 일자:</strong> ${riskDate} &nbsp;|&nbsp; <strong>현장 접촉 결과:</strong> 대면 면담 성공(met)<br>
-            • <strong>실외 6대 관찰 지표:</strong> ${c.obsSummary}<br>
-            • <strong>실내 4대 주거 지표:</strong> 식사 결손(불량), 실내 위생 취약, 쓰레기 적재, 채광/환기 불량<br>
-            • <strong>보건복지부 연계 욕구:</strong> ${c.mohwList.join(', ')}
+          <div style="font-size:12px; color:#475569; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:4px;">
+            • <strong>진단 기준:</strong> 저위험(CLEAN 0~2점), 중위험(MID 3~5점), 고위험(HIGH 6~7점), 초고위험(CRITICAL 8점 이상 또는 Q10 위험 시 즉시 CRITICAL)<br>
+            • <strong>진단 일자:</strong> ${riskDate} &nbsp;|&nbsp; <strong>현장 접촉 결과:</strong> 대면 면담 성공(met) &nbsp;|&nbsp; <strong>보안 검증:</strong> 원천 무결성 보존
           </div>
+          <table class="review-questions-table" style="width:100%; font-size:11.5px;">
+            <thead>
+              <tr style="background:#f1f5f9; color:#0f172a;">
+                <th style="width:40px; padding:6px; text-align:center;">번호</th>
+                <th style="padding:6px; text-align:left;">고독사 위험도 심층 평가 지표</th>
+                <th style="width:85px; padding:6px; text-align:center;">연계 사업단</th>
+                <th style="width:75px; padding:6px; text-align:center;">현장 판정</th>
+                <th style="width:50px; padding:6px; text-align:center;">배점</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="text-align:center;">Q1</td><td><strong>식사 결손:</strong> 지난 1주 동안 하루 한 끼 식사도 하지 못함</td><td style="text-align:center;"><span style="color:#166534; font-weight:700;">식사지원(ME)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (결손)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q2</td><td><strong>혼술 만취:</strong> 지난 1주 동안 혼자 몸을 가누지 못할 정도로 과음</td><td style="text-align:center;"><span style="color:#1e40af; font-weight:700;">건강음료(HE)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (만취)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q3</td><td><strong>사회적 고립:</strong> 지난 1주 동안 타인과의 연락이나 만남 전무</td><td style="text-align:center;"><span style="color:#7c3aed; font-weight:700;">정서이웃(EM)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (단절)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q4</td><td><strong>거동 불편:</strong> 건강 문제로 외출하지 못하고 집안에서만 지냄</td><td style="text-align:center;"><span style="color:#1e40af; font-weight:700;">건강음료(HE)</span></td><td style="text-align:center; color:#16a34a; font-weight:700;">정상 (외출)</td><td style="text-align:center; font-weight:700;">0점</td></tr>
+              <tr><td style="text-align:center;">Q5</td><td><strong>주거 위생:</strong> 집안에 쓰레기, 빈 병, 악취 등이 방치됨</td><td style="text-align:center;"><span style="color:#b45309; font-weight:700;">주거개선(CL)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (적재)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q6</td><td><strong>공과금 체납:</strong> 전기, 가스, 수도 등 공과금 3개월 이상 체납</td><td style="text-align:center;"><span style="color:#7c3aed; font-weight:700;">정서이웃(EM)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (체납)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q7</td><td><strong>치료 중단:</strong> 만성 질환 투약이나 병원 치료를 임의 중단</td><td style="text-align:center;"><span style="color:#1e40af; font-weight:700;">건강음료(HE)</span></td><td style="text-align:center; color:#16a34a; font-weight:700;">정상 (치료중)</td><td style="text-align:center; font-weight:700;">0점</td></tr>
+              <tr><td style="text-align:center;">Q8</td><td><strong>자포자기:</strong> 삶의 의욕을 잃고 자포자기 심정으로 지냄</td><td style="text-align:center;"><span style="color:#7c3aed; font-weight:700;">정서이웃(EM)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (의욕상실)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center;">Q9</td><td><strong>비상망 부재:</strong> 위급 시 도움을 요청할 가족이나 지인 부재</td><td style="text-align:center;"><span style="color:#7c3aed; font-weight:700;">정서이웃(EM)</span></td><td style="text-align:center; color:#dc2626; font-weight:700;">의심 (지인없음)</td><td style="text-align:center; font-weight:700;">1점</td></tr>
+              <tr><td style="text-align:center; background:#fef2f2;">Q10</td><td style="background:#fef2f2;"><strong style="color:#dc2626;">생명 위기 (특허 4점 가중):</strong> 죽고 싶다는 생각 또는 극단적 선택 징후</td><td style="text-align:center; background:#fef2f2;"><span style="color:#dc2626; font-weight:800;">긴급위기</span></td><td style="text-align:center; color:#16a34a; font-weight:700; background:#fef2f2;">정상 (안정)</td><td style="text-align:center; font-weight:700; background:#fef2f2;">0점</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

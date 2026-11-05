@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file beneficiaryCardsPane.js
  * @description 수혜자 관리카드 (대면 방문 & 비대면 유선상담) 통합 서브 페인 모듈 (ESM)
  *              - D1 beneficiary_monitoring_cards 실시간 원장 연동
@@ -11,7 +11,7 @@
 
 import { notifier } from '../../utils/notifier.js';
 import { maskBirth } from '../../utils/mask.js';
-import { BeneficiaryManageModal } from '../modals/beneficiaryManageModal.js';
+import { BeneficiaryManageModal } from '../modals/beneficiaryManageModal.js?v=3.9.33';
 
 export class BeneficiaryCardsPane {
   constructor(options = {}) {
