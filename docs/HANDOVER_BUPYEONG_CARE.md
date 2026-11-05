@@ -200,3 +200,27 @@
 - `bupyeong-seniorcare/pages/org-admin.html` (관리자 포털 마크업)
 - `wellriskkeeper/js/views/panes/buManagePane.js` (게이트키퍼 동기화 대상)
 - `schema.sql` (D1 RDBMS 마스터 스키마)
+
+---
+
+## 5. 2026-11-05 업데이트 현황 및 원본-파생 위계 확립
+
+### 1) 플랫폼 원천 정의 및 프로젝트 위계 (절대 철칙)
+* **`wellriskkeeper` (보건복지부 전국 시범사업 표준 원본 마스터 코어)**:
+  * 보건복지부 고독사 예방 시범사업 기반 전국 확산용 표준 원본입니다.
+  * 인천 서구(`260`) 실증 모델이며, D1 RDBMS 및 전사 UID 체계의 원천(Origin)입니다.
+* **`bupyeong-seniorcare` (본 프로젝트 / 지자체 특화 파생 모델)**:
+  * 원본인 `wellriskkeeper` 코어를 바탕으로 **인천광역시 부평구청 및 부평구 노인인력개발센터** 맞춤형으로 파생된 모델입니다.
+  * 관할 코드: 인천 부평구(`237`) 100% 완전 가명화 철칙 준수.
+
+### 2) 2026-11-05 주요 구현 완료 내역
+* **D1 일정 양방향 연동**: 수혜자 관리카드(6번 탭 차기 일정)와 사업단 관리(3-3) 간 D1 `bu_activities` 실시간 동기화 완비.
+* **사업단별 Data Scope RBAC 격리 및 타 사업단 읽기 전용 가명화 통제 완비**:
+  * `js/services/rbacService.js`: `assignedBuCode` 세션 바인딩, `canWriteBu`, `canWriteTarget` 구현.
+  * `js/views/panes/buManagePane.js`: 타 사업단 탭 선택 시 3-3 일정 등록 폼 비활성화 및 안내 배너 표출, 삭제 버튼 숨김.
+  * `js/views/modals/beneficiaryManageModal.js`: 타 사업단 대상자 상세 진입 시 가명화 마스킹 강제 고정 및 저장 버튼 비활성화.
+  * `dev-server.mjs`: `x-admin-bu` 헤더 기반 403 Forbidden 백엔드 차단 가드 실측 검증 완료.
+* **Git Commit & Push 완료**: 커밋 해시 `e89dba5`
+
+### 3) 차기 연계 과제: 4대 사업단 현장 활동가용 통합 체크인 PWA
+* 원본 코어인 `wellriskkeeper` 내부에 `pages/pwa-activity.html` 모듈을 우선 구축·검증한 후, 부평구(`bupyeong-seniorcare`)로 동일 규격으로 신속 복제 동기화 예정.
