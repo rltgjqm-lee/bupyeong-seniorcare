@@ -5,12 +5,13 @@
  * - Network-First with Cache Fallback 전략 (실시간 최신 버전 유지 + 오프라인 즉시 구동)
  */
 
-const CACHE_NAME = 'bupyeong-seniorcare-v3.9.3';
+const CACHE_NAME = 'bupyeong-seniorcare-v3.9.4';
 
 // 핵심 정적 자산 프리캐시 목록
 const PRECACHE_ASSETS = [
   '/',
   '/pages/pwa-survey.html',
+  '/pages/pwa-activity.html',
   '/manifest.json',
   '/favicon.ico',
   '/css/common.css',
@@ -43,7 +44,14 @@ const PRECACHE_ASSETS = [
   '/js/pwa/steps/step4MonitoringView.js',
   '/js/pwa/steps/step5SatisfactionView.js',
   '/js/pwa/steps/step6ConsentView.js',
-  '/js/pwa/steps/step7CompleteView.js'
+  '/js/pwa/steps/step7CompleteView.js',
+  '/js/pwa-activity/activityApp.js',
+  '/js/pwa-activity/activityService.js',
+  '/js/pwa-activity/step1RegistrationView.js',
+  '/js/pwa-activity/step2TargetScheduleView.js',
+  '/js/pwa-activity/step3WorkDutyView.js',
+  '/js/pwa-activity/step4ReportConfirmView.js',
+  '/js/pwa-activity/step5CheckoutView.js'
 ];
 
 // 1. Install Event: 개별 자산 안전 캐싱 (한 파일 실패 시에도 전체 중단 방지)

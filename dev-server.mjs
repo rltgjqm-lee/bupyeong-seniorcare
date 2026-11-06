@@ -137,7 +137,22 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // 2-B) D1 참여활동가 목록 조회: /api/v1/participants
+    // 2-B) D1 활성 사업단 목록 조회: GET /api/v1/business-units
+    if (pathname === '/api/v1/business-units' && req.method === 'GET') {
+      const units = [
+        { bu_uid: 'B-28-237-01-ME', org_uid: 'O-28-237-01', bu_code: 'ME', bu_name: '식사지원 사업단', bu_category: '식사지원', target_quota: 60, service_cycle_days: 2, is_active: 1 },
+        { bu_uid: 'B-28-237-01-HE', org_uid: 'O-28-237-01', bu_code: 'HE', bu_name: '건강의료 사업단', bu_category: '건강의료', target_quota: 40, service_cycle_days: 3, is_active: 1 },
+        { bu_uid: 'B-28-237-01-CL', org_uid: 'O-28-237-01', bu_code: 'CL', bu_name: '주거개선 사업단', bu_category: '주거개선', target_quota: 30, service_cycle_days: 7, is_active: 1 },
+        { bu_uid: 'B-28-237-01-EM', org_uid: 'O-28-237-01', bu_code: 'EM', bu_name: '정서이웃 사업단', bu_category: '정서이웃', target_quota: 50, service_cycle_days: 7, is_active: 1 },
+        { bu_uid: 'B-28-237-01-GD', org_uid: 'O-28-237-01', bu_code: 'GD', bu_name: '우울선별조사단', bu_category: '조사', target_quota: 100, service_cycle_days: 14, is_active: 1 },
+        { bu_uid: 'B-28-237-01-WR', org_uid: 'O-28-237-01', bu_code: 'WR', bu_name: '고독사예방살핌단', bu_category: '조사', target_quota: 100, service_cycle_days: 14, is_active: 1 }
+      ];
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: true, data: units, total: units.length }));
+      return;
+    }
+
+    // 2-C) D1 참여활동가 목록 조회: /api/v1/participants
     if (pathname === '/api/v1/participants' && req.method === 'GET') {
       const buFilter = parsedUrl.searchParams.get('buCode');
       const bupyeongParticipants = [
@@ -490,6 +505,68 @@ const server = http.createServer((req, res) => {
         } catch (e) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ success: false, message: '잘못된 요청입니다.' }));
+        }
+      });
+      return;
+    }
+
+    // 7) 참여자 일일 근태 및 업무 시작 체크인: POST /api/v1/attendance/check-in
+    if (pathname === '/api/v1/attendance/check-in' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          const workDate = payload.workDate || payload.dutyDate || new Date().toISOString().slice(0, 10);
+          const participantUid = payload.participantUid || 'U-28-237-01-ME-001';
+          const orgUid = payload.orgUid || 'O-28-237-01';
+          const buCode = payload.buCode || 'ME';
+          const checkInTime = payload.checkInTime || payload.startTime || new Date().toTimeString().slice(0, 5);
+          const attUid = `ATT-${orgUid.replace(/^O-/, '')}-${buCode}-${participantUid.slice(-3)}-${workDate.replace(/-/g, '')}`;
+
+          console.log(`[부평 D1 근태] 업무 시작 체크인 완료 [${attUid}] (${checkInTime})`);
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: true,
+            message: '업무 시작 및 출근 위치가 정상 등록되었습니다.',
+            attUid,
+            checkInTime,
+            workDate
+          }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, error: e.message }));
+        }
+      });
+      return;
+    }
+
+    // 8) 참여자 일일 근태 및 업무 종료 체크아웃: POST /api/v1/attendance/check-out
+    if (pathname === '/api/v1/attendance/check-out' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          const workDate = payload.workDate || payload.dutyDate || new Date().toISOString().slice(0, 10);
+          const participantUid = payload.participantUid || 'U-28-237-01-ME-001';
+          const orgUid = payload.orgUid || 'O-28-237-01';
+          const buCode = payload.buCode || 'ME';
+          const checkOutTime = payload.checkOutTime || payload.endTime || new Date().toTimeString().slice(0, 5);
+          const attUid = `ATT-${orgUid.replace(/^O-/, '')}-${buCode}-${participantUid.slice(-3)}-${workDate.replace(/-/g, '')}`;
+
+          console.log(`[부평 D1 근태] 업무 종료 체크아웃 완료 [${attUid}] (${checkOutTime})`);
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            success: true,
+            message: '당일 활동이 정상 종료 마감되었습니다.',
+            attUid,
+            checkOutTime,
+            workDate
+          }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, error: e.message }));
         }
       });
       return;

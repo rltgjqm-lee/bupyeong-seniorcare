@@ -222,5 +222,5 @@
   * `dev-server.mjs`: `x-admin-bu` 헤더 기반 403 Forbidden 백엔드 차단 가드 실측 검증 완료.
 * **Git Commit & Push 완료**: 커밋 해시 `e89dba5`
 
-### 3) 차기 연계 과제: 4대 사업단 현장 활동가용 통합 체크인 PWA
+### 3) 차기 연계 과제: 사업단 현장 참여자용 통합 체크인 PWA
 * 원본 코어인 `wellriskkeeper` 내부에 `pages/pwa-activity.html` 모듈을 우선 구축·검증한 후, 부평구(`bupyeong-seniorcare`)로 동일 규격으로 신속 복제 동기화 예정.
