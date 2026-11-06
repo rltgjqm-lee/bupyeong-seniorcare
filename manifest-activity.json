@@ -1,0 +1,38 @@
+{
+  "name": "부평 시니어안심살핌 (사업단)",
+  "short_name": "부평 안심살핌",
+  "description": "인천광역시 부평구 노인일자리 사업단 모바일 현장 활동보고 PWA 시스템",
+  "start_url": "/pages/pwa-activity.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "categories": ["government", "productivity"],
+  "lang": "ko-KR",
+  "icons": [
+    {
+      "src": "/img/icons/icon-512.png?v=2.7",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/icons/icon-192.png?v=2.7",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/icons/icon-maskable.png?v=2.7",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/img/icons/apple-touch-icon.png?v=2.7",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
