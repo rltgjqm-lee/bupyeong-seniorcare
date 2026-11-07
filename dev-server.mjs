@@ -143,9 +143,7 @@ const server = http.createServer((req, res) => {
         { bu_uid: 'B-28-237-01-ME', org_uid: 'O-28-237-01', bu_code: 'ME', bu_name: '식사지원 사업단', bu_category: '식사지원', target_quota: 60, service_cycle_days: 2, is_active: 1 },
         { bu_uid: 'B-28-237-01-HE', org_uid: 'O-28-237-01', bu_code: 'HE', bu_name: '건강의료 사업단', bu_category: '건강의료', target_quota: 40, service_cycle_days: 3, is_active: 1 },
         { bu_uid: 'B-28-237-01-CL', org_uid: 'O-28-237-01', bu_code: 'CL', bu_name: '주거개선 사업단', bu_category: '주거개선', target_quota: 30, service_cycle_days: 7, is_active: 1 },
-        { bu_uid: 'B-28-237-01-EM', org_uid: 'O-28-237-01', bu_code: 'EM', bu_name: '정서이웃 사업단', bu_category: '정서이웃', target_quota: 50, service_cycle_days: 7, is_active: 1 },
-        { bu_uid: 'B-28-237-01-GD', org_uid: 'O-28-237-01', bu_code: 'GD', bu_name: '우울선별조사단', bu_category: '조사', target_quota: 100, service_cycle_days: 14, is_active: 1 },
-        { bu_uid: 'B-28-237-01-WR', org_uid: 'O-28-237-01', bu_code: 'WR', bu_name: '고독사예방살핌단', bu_category: '조사', target_quota: 100, service_cycle_days: 14, is_active: 1 }
+        { bu_uid: 'B-28-237-01-EM', org_uid: 'O-28-237-01', bu_code: 'EM', bu_name: '정서이웃 사업단', bu_category: '정서이웃', target_quota: 50, service_cycle_days: 7, is_active: 1 }
       ];
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ success: true, data: units, total: units.length }));
