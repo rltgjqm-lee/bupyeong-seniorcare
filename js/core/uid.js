@@ -64,11 +64,15 @@ export class UidEngine {
   }
 
   /**
-   * 현장 직접 발굴용 대상자 관리번호 생성: C-{O-UID}-N{4자리난수} (총 5자리, 예: C-28-237-01-N7107)
+   * 현장 직접 발굴용 대상자 관리번호 생성 (C-UID): C-{O-UID}-N{4자리순번} (예: C-28-237-01-N1001)
+   * @param {string} orgUid 기관 UID
+   * @param {number|string} seqNumber 발굴 순번 (기본: 1001, 로컬 원장 연동)
    */
-  static generateFieldCaseUid(orgUid = BUPYEONG_DEFAULT_ORG_UID) {
-    const randNum = Math.floor(1000 + Math.random() * 9000);
-    return `C-${orgUid.slice(2)}-N${randNum}`;
+  static generateFieldCaseUid(orgUid = BUPYEONG_DEFAULT_ORG_UID, seqNumber = 1001) {
+    const cleanSeq = typeof seqNumber === 'string' && seqNumber.startsWith('N')
+      ? seqNumber
+      : `N${String(seqNumber).padStart(4, '0')}`;
+    return `C-${orgUid.slice(2)}-${cleanSeq}`;
   }
 
   /**

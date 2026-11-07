@@ -1,4 +1,4 @@
-﻿import { HOUSING_TYPES } from '../../config/constants.js';
+import { HOUSING_TYPES } from '../../config/constants.js';
 import { maskPhone, maskAddress, maskName, maskBirth } from '../../utils/mask.js';
 import { ValidationService } from '../../services/validationService.js';
 import { AssignmentService } from '../../services/assignmentService.js';
@@ -37,11 +37,23 @@ export class Step2TargetView {
 
   getNextFieldSuffix() {
     const ledger = this.getFieldLedger();
-    let maxSeq = 1000;
+    let baseSeq = 1000;
+    try {
+      const storedBase = localStorage.getItem('wellrisk_device_base_seq');
+      if (storedBase && !isNaN(parseInt(storedBase, 10))) {
+        baseSeq = parseInt(storedBase, 10);
+      }
+    } catch (e) {
+      baseSeq = 1000;
+    }
+
+    let maxSeq = baseSeq;
     ledger.forEach((item) => {
       const num = parseInt(item.seq, 10);
-      if (!isNaN(num) && num > maxSeq) {
-        maxSeq = num;
+      if (!isNaN(num) && num >= baseSeq && num < baseSeq + 1000) {
+        if (num > maxSeq) {
+          maxSeq = num;
+        }
       }
     });
 
@@ -353,44 +365,94 @@ export class Step2TargetView {
     const g = p.guardian;
     const b = this.mediator.state.basicInfo;
 
-    // 1) 3개 사각 박스 [ ][ ][ ] 직접 입력 및 자동 포커스 이동
+    // 1) 5개 원형 박스 [ ][ ][ ][ ][ ] 직접 입력 및 자동 포커스 이동
     const orgSuffix = b.orgCode ? b.orgCode.replace(/^O-/, '') : '28-237-01';
     const casePrefix = `C-${orgSuffix}-`;
-    const box1 = document.getElementById('uidBox1');
-    const box2 = document.getElementById('uidBox2');
-    const box3 = document.getElementById('uidBox3');
-    const boxes = [box1, box2, box3];
+    const circleBoxes = [
+      document.getElementById('uidCircle1'),
+      document.getElementById('uidCircle2'),
+      document.getElementById('uidCircle3'),
+      document.getElementById('uidCircle4'),
+      document.getElementById('uidCircle5')
+    ];
 
-    const syncCaseUidFromBoxes = () => {
-      const v1 = (box1?.value || '').trim().toUpperCase();
-      const v2 = (box2?.value || '').trim().toUpperCase();
-      const v3 = (box3?.value || '').trim().toUpperCase();
-      const seq = `${v1}${v2}${v3}`;
-      if (seq.length === 3) {
+    const syncCaseUidFromBoxes = async () => {
+      const chars = circleBoxes.map(box => (box?.value || '').trim().toUpperCase());
+      const seq = chars.join('');
+      if (seq.length === 5) {
         const fullUid = `${casePrefix}${seq}`;
         b.caseUid = fullUid;
         b.householdId = fullUid;
         b.rawSurveyUid = UidEngine.generateDatedSurveyUid(fullUid, b.inspectionDate);
+
+        // 기존 배정/방문 대상자 여부 조회
+        try {
+          const cases = await AssignmentService.getAssignedCases(b.orgCode, '박영희');
+          const matched = cases.find(c => c.householdId === fullUid || c.caseUid === fullUid);
+          const banner = document.getElementById('addrMatchedCaseBanner');
+          if (matched) {
+            this.selectedTargetMeta = {
+              ...matched,
+              caseStatus: 'REVISIT'
+            };
+            if (banner) {
+              banner.style.display = 'block';
+              banner.innerHTML = `
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="circle-round-badge" style="background:#2563eb; color:#ffffff; font-weight:800; font-size:11.5px; padding:2px 7px;">기존</span>
+                      <strong style="font-size:13.5px; color:#1e40af;">기존 대상자 방문 일지 추가</strong>
+                    </div>
+                    <span class="uid-badge" style="font-family:monospace; background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; font-weight:700;">${fullUid}</span>
+                  </div>
+                  <div style="font-size:11.5px; color:#1e3a8a; line-height:1.5; margin-top:4px;">
+                    * 기존 관리번호가 확인되었습니다. 이전 방문 이력에 누적 기록됩니다.
+                  </div>
+                </div>
+              `;
+            }
+            notifier.toast(`기존 대상자 [${fullUid}] 방문 일지로 연결되었습니다.`, 'info', 2000);
+          } else {
+            // 미존재 신규 번호
+            this.selectedTargetMeta = {
+              householdId: fullUid,
+              caseUid: fullUid,
+              caseStatus: seq.startsWith('N') ? 'FIELD_DISCOVERY' : 'NEW_ASSIGNED',
+              targetName: '',
+              birth: '',
+              gender: '',
+              phone: '',
+              address: '',
+              housingType: ''
+            };
+            if (banner) {
+              banner.style.display = 'none';
+            }
+          }
+        } catch (err) {
+          console.warn('배정 조회 에러', err);
+        }
       }
     };
 
-    boxes.forEach((box, idx) => {
+    circleBoxes.forEach((box, idx) => {
       if (!box) return;
 
       box.addEventListener('input', (e) => {
         const clean = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         e.target.value = clean.slice(-1);
 
-        if (e.target.value && idx < 2) {
-          boxes[idx + 1].focus();
-          boxes[idx + 1].select();
+        if (e.target.value && idx < circleBoxes.length - 1) {
+          circleBoxes[idx + 1].focus();
+          circleBoxes[idx + 1].select();
         }
         syncCaseUidFromBoxes();
       });
 
       box.addEventListener('keydown', (e) => {
         if (e.key === 'Backspace' && !box.value && idx > 0) {
-          boxes[idx - 1].focus();
+          circleBoxes[idx - 1].focus();
         }
       });
 
@@ -399,11 +461,12 @@ export class Step2TargetView {
       });
     });
 
-    // 2) ( N+ ) 원형 버튼 터치 시 3자리 난수 생성 및 신규 폼 진입
+    // 2) ( N+ ) 원형 버튼 터치 시 순차 채번 원장 기반 신규 번호 생성
     const btnNPlus = document.getElementById('btnNPlusCircle');
     if (btnNPlus) {
       btnNPlus.addEventListener('click', () => {
-        const newUid = UidEngine.generateFieldCaseUid(b.orgCode);
+        const nextSuffix = this.getNextFieldSuffix();
+        const newUid = `${casePrefix}${nextSuffix}`;
         b.caseUid = newUid;
         b.householdId = newUid;
         b.rawSurveyUid = UidEngine.generateDatedSurveyUid(newUid, b.inspectionDate);
@@ -440,7 +503,7 @@ export class Step2TargetView {
         };
 
         this.render();
-        notifier.toast(`신규 관리번호 [${newUid}]가 생성되었습니다.`, 'success', 2500);
+        notifier.toast(`현장 신규 관리번호 [${newUid}]가 순차 발급되었습니다.`, 'success', 2500);
       });
     }
 
