@@ -10,7 +10,7 @@ import { ApiClient } from '../../api/apiClient.js';
 import { notifier } from '../../utils/notifier.js';
 import { BUPYEONG_DONGS } from '../../data/bupyeongCoords.js';
 
-const STORAGE_KEY_FIELD_LEDGER = 'bupyeong_field_uid_ledger';
+const STORAGE_KEY_FIELD_LEDGER = 'wellrisk_field_uid_ledger';
 
 export class Step2TargetView {
   constructor(mediator) {
@@ -24,7 +24,7 @@ export class Step2TargetView {
    */
   getFieldLedger() {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_FIELD_LEDGER);
+      const data = localStorage.getItem(STORAGE_KEY_FIELD_LEDGER) || localStorage.getItem('bupyeong_field_uid_ledger');
       return data ? JSON.parse(data) : [];
     } catch (e) {
       return [];
@@ -32,15 +32,27 @@ export class Step2TargetView {
   }
 
   /**
-   * 중복 없는 다음 순차 발굴 번호 채번 (N1001부터 1씩 증가)
+   * 중복 없는 다음 순차 발굴 번호 채번 (단말기 대역 분리 반영: N1001~, N2001~)
    */
   getNextFieldSuffix() {
     const ledger = this.getFieldLedger();
-    let maxSeq = 1000;
+    let baseSeq = 1000;
+    try {
+      const storedBase = localStorage.getItem('wellrisk_device_base_seq');
+      if (storedBase && !isNaN(parseInt(storedBase, 10))) {
+        baseSeq = parseInt(storedBase, 10);
+      }
+    } catch (e) {
+      baseSeq = 1000;
+    }
+
+    let maxSeq = baseSeq;
     ledger.forEach((item) => {
       const num = parseInt(item.seq, 10);
-      if (!isNaN(num) && num > maxSeq) {
-        maxSeq = num;
+      if (!isNaN(num) && num >= baseSeq && num < baseSeq + 1000) {
+        if (num > maxSeq) {
+          maxSeq = num;
+        }
       }
     });
 
