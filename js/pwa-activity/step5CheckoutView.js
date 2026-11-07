@@ -145,13 +145,13 @@ export class Step5CheckoutView {
           참여자 서명이 포함된 정규 활동일지를 PDF(또는 엑셀)로 저장 됩니다. 이상 징후의 경우, 일정 추가 요청을 하여 주세요.
         </p>
         <div class="btn-action-row" style="margin-top: 0; display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" id="btnExportAllPdf" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; flex: 1; min-width: 135px;">
-            활동 보고서 PDF 인쇄/저장
+          <button type="button" id="btnExportAllPdf" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; flex: 1; min-width: 95px;">
+            활동 PDF
           </button>
-          <button type="button" id="btnExportAllExcel" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; flex: 1; min-width: 135px;">
-            당일 내역 엑셀 다운로드
+          <button type="button" id="btnExportAllExcel" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; flex: 1; min-width: 95px;">
+            활동 엑셀
           </button>
-          <button type="button" id="btnRequestScheduleAdd" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; flex: 1; min-width: 110px;">
+          <button type="button" id="btnRequestScheduleAdd" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; flex: 1; min-width: 95px;">
             일정 추가 요청
           </button>
         </div>
