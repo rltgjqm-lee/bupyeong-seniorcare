@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>부평 통합돌봄사업단 - 인트로 및 앱 아이콘 종합 미리보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    background-color: #0f172a;
+    font-family: 'Pretendard', sans-serif;
+    min-height: 100vh;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    overflow-x: hidden;
+  }
+
+  .preview-container {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .header-area {
+    text-align: center;
+  }
+  .header-area h1 {
+    font-size: 24px;
+    color: #38bdf8;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .header-area p {
+    font-size: 14.5px;
+    color: #94a3b8;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  .replay-btn {
+    background: #0d9488;
+    color: #ffffff;
+    border: none;
+    padding: 11px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .replay-btn:hover {
+    background: #0f766e;
+    transform: translateY(-2px);
+  }
+
+  /* ========================================================
+     스마트폰 홈 화면 실제 앱 아이콘(PWA Icon) 섹션
+     - [핵심] 아이콘에서는 하트 완전 제외 (깔끔한 지자체 공식 정체성)
+     - 모서리 둥글림 잘림 방지 안전 여백 100% 확보
+     - 글자 줄바꿈 원천 방지 (nowrap)
+     ======================================================== */
+  .icon-preview-section {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-desc {
+    font-size: 13.5px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .icon-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  /* [아이콘 마스터 512x512] (화면 220px 뷰) */
+  .app-icon-512 {
+    width: 220px;
+    height: 220px;
+    background: #ffffff;
+    border-radius: 50px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 22px;
+    position: relative;
+    user-select: none;
+  }
+
+  /* [아이콘 스마트폰 실물 192x192] (화면 88px 뷰) */
+  .app-icon-phone {
+    width: 88px;
+    height: 88px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 8px;
+    gap: 9px;
+    user-select: none;
+  }
+  .phone-app-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #f8fafc;
+    text-align: center;
+    letter-spacing: -0.02em;
+  }
+
+  /* 아이콘 내부 듀얼 로고 */
+  .icon-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 10px;
+  }
+  .app-icon-512 .icon-logos img.incheon {
+    height: 32px;
+    max-width: 44%;
+    object-fit: contain;
+  }
+  .app-icon-512 .icon-logos img.bupyeong {
+    height: 38px;
+    max-width: 44%;
+    object-fit: contain;
+  }
+  .app-icon-512 .icon-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #cbd5e1;
+    flex-shrink: 0;
+  }
+
+  .app-icon-phone .icon-logos {
+    gap: 5px;
+  }
+  .app-icon-phone .icon-logos img.incheon {
+    height: 14px;
+    max-width: 44%;
+    object-fit: contain;
+  }
+  .app-icon-phone .icon-logos img.bupyeong {
+    height: 16px;
+    max-width: 44%;
+    object-fit: contain;
+  }
+  .app-icon-phone .icon-divider {
+    width: 1px;
+    height: 11px;
+    background-color: #cbd5e1;
+    flex-shrink: 0;
+  }
+
+  /* 아이콘 하단 배지 (통합돌봄사업단 + 부평구) */
+  .icon-badge-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .app-icon-512 .icon-badge-box {
+    gap: 6px;
+  }
+  .app-icon-512 .ib-title {
+    padding: 5px 12px;
+    border: 1.8px solid #0f172a;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.03em;
+    background: #ffffff;
+    white-space: nowrap;
+  }
+  .app-icon-512 .ib-circles {
+    display: flex;
+    gap: 3px;
+  }
+  .app-icon-512 .ib-circle-item {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #7cb342;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  .app-icon-phone .icon-badge-box {
+    gap: 3px;
+    transform: scale(0.98);
+  }
+  .app-icon-phone .ib-title {
+    padding: 2px 6px;
+    border: 1.2px solid #0f172a;
+    border-radius: 999px;
+    font-size: 7.2px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+  .app-icon-phone .ib-circles {
+    display: flex;
+    gap: 1.5px;
+  }
+  .app-icon-phone .ib-circle-item {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #7cb342;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.8px;
+    font-weight: 700;
+  }
+
+  /* ========================================================
+     PWA 오프닝 인트로 스플래시 오버레이
+     - [핵심] 인트로에서는 감성 하트 드로잉 애니메이션 100% 보존/가동!
+     ======================================================== */
+  .intro-splash-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ffffff;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: opacity 0.7s ease-in-out, visibility 0.7s ease-in-out;
+  }
+
+  .intro-splash-overlay.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .intro-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    user-select: none;
+  }
+
+  /* 1. 하트 선 드로잉 애니메이션 (인트로 감성 복원!) */
+  svg.intro-heart {
+    width: 86px;
+    height: 86px;
+    overflow: visible;
+  }
+  svg.intro-heart path {
+    fill: rgba(13, 148, 136, 0);
+    stroke: #0d9488;
+    stroke-width: 1.3;
+    stroke-dasharray: 85;
+    stroke-dashoffset: 85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation:
+      introDrawHeart 1.3s ease-in-out forwards,
+      introFillHeart 0.5s ease-out 1.3s forwards;
+  }
+  @keyframes introDrawHeart {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes introFillHeart {
+    to { fill: rgba(13, 148, 136, 0.14); }
+  }
+
+  /* 2. 인천시 로고 + 부평구 로고 페이드인 */
+  .dual-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0;
+    animation: introFadeUp 0.8s ease-out 1.2s forwards;
+  }
+  .incheon-logo {
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+  }
+  .bupyeong-logo {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+  }
+  .logo-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #cbd5e1;
+  }
+
+  /* 3. 문구: [통합돌봄사업단] + [부][평][구] 페이드인 */
+  .intro-badge-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    animation: introFadeUp 0.8s ease-out 1.7s forwards;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+
+  .badge-service {
+    padding: 7px 18px;
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+    white-space: nowrap;
+  }
+
+  .badge-circles {
+    display: flex;
+    gap: 4px;
+  }
+  .circle-item {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #7cb342;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14.5px;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(124, 179, 66, 0.3);
+  }
+
+  /* 4. 포괄 공식 카피 */
+  .intro-sub-text {
+    font-family: 'Gowun Dodum', 'Pretendard', sans-serif;
+    font-size: 15.5px;
+    font-weight: 400;
+    color: #475569;
+    margin-top: 2px;
+    opacity: 0;
+    animation: introFadeUp 0.8s ease-out 2.0s forwards;
+  }
+
+  @keyframes introFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .intro-skip-hint {
+    position: absolute;
+    bottom: 22px;
+    font-size: 12px;
+    color: #94a3b8;
+    letter-spacing: -0.01em;
+    opacity: 0;
+    animation: introFadeUp 0.8s ease-out 2.2s forwards;
+  }
+</style>
+</head>
+<body>
+
+<div class="preview-container">
+  <div class="header-area">
+    <h1>📱 부평 통합돌봄사업단 UI 에셋 검증 콘솔</h1>
+    <p>완벽 구분: <b>아이콘에서는 하트 제거</b> & <b>인트로 스플래시에서는 감성 하트 100% 유지</b></p>
+    <div class="btn-group">
+      <button class="replay-btn" onclick="playSplash()">🎬 하트 드로잉 인트로 다시 보기</button>
+    </div>
+  </div>
+
+  <!-- 스마트폰 홈 화면 실제 앱 아이콘(PWA Icon) 섹션 (하트 없음) -->
+  <div class="icon-preview-section">
+    <div class="section-title">
+      <span>🖼️ 스마트폰 홈 화면 실제 앱 아이콘 (하트 제외 / 모서리 안전 여백 확보)</span>
+    </div>
+    <div class="section-desc">
+      스마트폰 홈 화면 아이콘은 하트 없이 <b>상단 듀얼 로고</b>와 <b>하단 [통합돌봄사업단] [부][평][구]</b>로 깔끔하게 구성되어, 작은 모바일 화면에서도 로고 잘림이나 글자 줄바꿈 없이 완벽한 시인성을 보장합니다.
+    </div>
+
+    <div class="icon-grid">
+      <!-- 512x512 원본 마스터 뷰 -->
+      <div class="icon-card">
+        <div class="app-icon-512">
+          <div class="icon-logos">
+            <img src="../img/incheon_intro_logo.png" alt="인천시" class="incheon">
+            <div class="icon-divider"></div>
+            <img src="../img/부평구.png" alt="부평구" class="bupyeong">
+          </div>
+
+          <div class="icon-badge-box">
+            <div class="ib-title">통합돌봄사업단</div>
+            <div class="ib-circles">
+              <span class="ib-circle-item">부</span>
+              <span class="ib-circle-item">평</span>
+              <span class="ib-circle-item">구</span>
+            </div>
+          </div>
+        </div>
+        <div class="icon-card-label">아이콘 원본 마스터 (512×512)</div>
+      </div>
+
+      <!-- 스마트폰 홈 화면 실물 뷰 (192px/88px 렌더링) -->
+      <div class="icon-card">
+        <div class="app-icon-phone">
+          <div class="icon-logos">
+            <img src="../img/incheon_intro_logo.png" alt="인천시" class="incheon">
+            <div class="icon-divider"></div>
+            <img src="../img/부평구.png" alt="부평구" class="bupyeong">
+          </div>
+          <div class="icon-badge-box">
+            <div class="ib-title">통합돌봄사업단</div>
+            <div class="ib-circles">
+              <span class="ib-circle-item">부</span>
+              <span class="ib-circle-item">평</span>
+              <span class="ib-circle-item">구</span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-app-name">부평 사업단</div>
+        <div class="icon-card-label">스마트폰 홈 화면 실물 (192×192)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     PWA 오프닝 인트로 스플래시 오버레이
+     - 감성 하트 선 드로잉 애니메이션 그대로 가동!
+     ======================================================== -->
+<div id="pwaIntroSplash" class="intro-splash-overlay" onclick="closeSplash()" title="화면을 터치하면 건너뜁니다">
+  <div class="intro-stack">
+    <!-- 1. 감성 하트 선 드로잉 애니메이션 (유지!) -->
+    <svg class="intro-heart" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+
+    <!-- 2. 인천광역시 로고 + 부평구 로고 듀얼 배치 -->
+    <div class="dual-logo-wrap">
+      <img src="../img/incheon_intro_logo.png" alt="인천광역시 로고" class="incheon-logo">
+      <div class="logo-divider"></div>
+      <img src="../img/부평구.png" alt="부평구 로고" class="bupyeong-logo">
+    </div>
+
+    <!-- 3. 문구 순서: [통합돌봄사업단] + [부][평][구] -->
+    <div class="intro-badge-group">
+      <div class="badge-service">통합돌봄사업단</div>
+      <div class="badge-circles">
+        <span class="circle-item">부</span>
+        <span class="circle-item">평</span>
+        <span class="circle-item">구</span>
+      </div>
+    </div>
+
+    <!-- 4. 확장성을 담은 공식 포괄 카피 -->
+    <div class="intro-sub-text">인천광역시, 부평구가 함께합니다.</div>
+  </div>
+
+  <div class="intro-skip-hint">화면을 터치하면 즉시 시작합니다</div>
+</div>
+
+<script>
+  let autoTimer = null;
+
+  function closeSplash() {
+    const splash = document.getElementById('pwaIntroSplash');
+    if (splash) {
+      splash.classList.add('fade-out');
+    }
+    if (autoTimer) clearTimeout(autoTimer);
+  }
+
+  function playSplash() {
+    const splash = document.getElementById('pwaIntroSplash');
+    if (splash) {
+      splash.classList.remove('fade-out');
+      const stack = splash.querySelector('.intro-stack');
+      const clone = stack.cloneNode(true);
+      stack.parentNode.replaceChild(clone, stack);
+      startAutoClose();
+    }
+  }
+
+  function startAutoClose() {
+    if (autoTimer) clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => {
+      closeSplash();
+    }, 3600);
+  }
+
+  window.addEventListener('load', () => {
+    startAutoClose();
+  });
+</script>
+
+</body>
+</html>

@@ -3,7 +3,7 @@
  * @description 부평 시니어안심살핌 (사업단 활동 전용) PWA Service Worker (Network-First & Offline Fallback)
  */
 
-const CACHE_NAME = 'bupyeong-activity-v1.0.0';
+const CACHE_NAME = 'bupyeong-activity-v1.0.1';
 
 const URLS_TO_CACHE = [
   '/pages/pwa-activity.html',
@@ -12,9 +12,10 @@ const URLS_TO_CACHE = [
   '/css/common.css',
   '/css/pwa.css',
   '/img/부평구.png',
-  '/img/logo@4x.png',
-  '/img/icons/icon-192.png',
-  '/img/icons/icon-512.png',
+  '/img/incheon_intro_logo.png',
+  '/img/icons/icon-activity-192.png',
+  '/img/icons/icon-activity-512.png',
+  '/img/icons/apple-touch-activity.png',
   '/lib/html2pdf.bundle.min.js',
   '/js/pwa-activity/activityApp.js',
   '/js/pwa-activity/activityService.js',
