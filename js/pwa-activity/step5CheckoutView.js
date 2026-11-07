@@ -141,8 +141,8 @@ export class Step5CheckoutView {
         <div style="font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
           3. 업무 서식 출력 및 증빙
         </div>
-        <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">
-          참여자 서명이 포함된 정규 활동일지를 A4 PDF로 다운로드하거나 보관용 엑셀로 내보냅니다.
+        <p style="font-size: 12.5px; color: #475569; margin: 0 0 10px 0; line-height: 1.5;">
+          참여자 서명이 포함된 정규 활동일지를 PDF(또는 엑셀)로 저장 됩니다. 이상 징후의 경우, 일정 추가 요청을 하여 주세요.
         </p>
         <div class="btn-action-row" style="margin-top: 0; display: flex; gap: 8px; flex-wrap: wrap;">
           <button type="button" id="btnExportAllPdf" class="btn-secondary" style="height: 42px; font-size: 13px; font-weight: 700; flex: 1; min-width: 135px;">
@@ -214,13 +214,19 @@ export class Step5CheckoutView {
 
     // 일정 추가 요청 이벤트 (참여기관 전달)
     container.querySelector('#btnRequestScheduleAdd')?.addEventListener('click', () => {
+      const reports = this.app.todayReports || [];
+      const hasIssues = reports.filter(r => r.verdict && r.verdict !== '정상 완료');
+      const issueNote = hasIssues.length > 0 
+        ? `\n(당일 이상 징후/특이사항 감지: ${hasIssues.length}건)` 
+        : '';
+
       notifier.confirm({
         title: '기관 일정 추가 요청',
-        message: '금일 현장 활동 특이사항 또는 대상자 어르신의 요청에 따라\n참여기관 관리자에게 차기 추가 방문 일정 배정을 요청하시겠습니까?',
+        message: `현장 이상 징후 또는 대상자 어르신의 긴급 살핌 요청에 따라\n참여기관 관리자에게 차기 추가 방문 일정 배정을 요청하시겠습니까?${issueNote}`,
         confirmText: '일정 추가 요청',
         cancelText: '취소',
         onConfirm: () => {
-          notifier.toast('참여기관 관리자에게 차기 방문 일정 추가 요청이 접수되었습니다.', 'success', 2500);
+          notifier.toast('참여기관 관리자에게 이상 징후 확인 및 차기 방문 일정 추가 요청이 전송되었습니다.', 'success', 2500);
         }
       });
     });
