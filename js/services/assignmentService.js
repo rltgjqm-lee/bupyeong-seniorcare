@@ -14,8 +14,8 @@ const MONITORING_STORAGE_KEY = 'WRK_MONITORING_RECORDS';
 const MOCK_ASSIGNMENT_CASES = [
   {
     assignmentUid: 'ASG_20261001_001',
-    householdId: 'C-28-260-01-001',
-    caseUid: 'C-28-260-01-001',
+    householdId: 'C-28-260-01-K1001',
+    caseUid: 'C-28-260-01-K1001',
     targetName: '김만석',
     birth: '1948-03-15',
     gender: 'M',
@@ -39,8 +39,8 @@ const MOCK_ASSIGNMENT_CASES = [
   },
   {
     assignmentUid: 'ASG_20261001_002',
-    householdId: 'C-28-260-01-002',
-    caseUid: 'C-28-260-01-002',
+    householdId: 'C-28-260-01-K1002',
+    caseUid: 'C-28-260-01-K1002',
     targetName: '이점순',
     birth: '1952-11-04',
     gender: 'F',
@@ -64,8 +64,8 @@ const MOCK_ASSIGNMENT_CASES = [
   },
   {
     assignmentUid: 'ASG_20261001_003',
-    householdId: 'C-28-260-01-003',
-    caseUid: 'C-28-260-01-003',
+    householdId: 'C-28-260-01-K1003',
+    caseUid: 'C-28-260-01-K1003',
     targetName: '박성철',
     birth: '1955-07-20',
     gender: 'M',
@@ -104,11 +104,20 @@ export class AssignmentService {
     const cleanOrg = (orgCode || '').trim();
     const cleanName = (inspectorName || '').trim();
 
-    return MOCK_ASSIGNMENT_CASES.filter(c => {
+    const filtered = MOCK_ASSIGNMENT_CASES.filter(c => {
       const matchOrg = !cleanOrg || c.orgCode === cleanOrg;
       const matchName = !cleanName || c.assignedInspector === cleanName || cleanName === '박영희' || cleanName === '김철수';
       return matchOrg && matchName;
     });
+
+    return filtered.length > 0 ? filtered : MOCK_ASSIGNMENT_CASES;
+  }
+
+  /**
+   * 모의 배정 가구 전체 목록 반환 (오프라인 안전 참조용)
+   */
+  static getAllMockCases() {
+    return MOCK_ASSIGNMENT_CASES;
   }
 
   /**

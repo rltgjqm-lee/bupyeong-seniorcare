@@ -536,8 +536,13 @@ export class Step2TargetView {
     document.querySelectorAll('.assign-modal-item[data-assign-id]').forEach(item => {
       item.addEventListener('click', async () => {
         const hid = item.getAttribute('data-assign-id');
-        const cases = await AssignmentService.getAssignedCases(b.orgCode, '박영희');
-        const chosen = cases.find(c => c.householdId === hid);
+        let cases = await AssignmentService.getAssignedCases(b.orgCode, b.inspectors?.[0] || '박영희');
+        let chosen = cases.find(c => c.householdId === hid || c.caseUid === hid);
+        if (!chosen) {
+          const allMocks = AssignmentService.getAllMockCases();
+          const hidSuffix = (hid || '').includes('-') ? hid.split('-').pop() : hid;
+          chosen = allMocks.find(c => c.householdId === hid || c.caseUid === hid || (hidSuffix && c.householdId.endsWith(hidSuffix)));
+        }
         if (!chosen) return;
 
         this.selectedTargetMeta = chosen;
@@ -551,17 +556,30 @@ export class Step2TargetView {
         p.housingType = chosen.housingType || '';
 
         if (chosen.guardian) {
-          p.guardian.hasGuardian = true;
-          p.guardian.relation = chosen.guardian.relation;
-          p.guardian.name = chosen.guardian.name;
-          p.guardian.phone = chosen.guardian.phone;
-          p.guardian.isProxySigner = chosen.guardian.isProxySigner || false;
+          p.guardian = {
+            hasGuardian: true,
+            relation: chosen.guardian.relation || '자녀',
+            name: chosen.guardian.name || '',
+            phone: chosen.guardian.phone || '',
+            address: chosen.guardian.address || '',
+            isProxySigner: chosen.guardian.isProxySigner || false
+          };
         } else {
-          p.guardian.hasGuardian = false;
+          p.guardian = {
+            hasGuardian: false,
+            relation: '자녀',
+            name: '',
+            phone: '',
+            address: '',
+            isProxySigner: false
+          };
         }
 
-        b.caseUid = chosen.caseUid || b.caseUid;
-        b.householdId = chosen.householdId;
+        const rawId = chosen.householdId || chosen.caseUid || 'K1001';
+        const targetSeq = rawId.includes('-') ? rawId.split('-').pop() : rawId;
+        b.caseUid = `${casePrefix}${targetSeq}`;
+        b.householdId = b.caseUid;
+        b.rawSurveyUid = UidEngine.generateDatedSurveyUid(b.caseUid, b.inspectionDate);
 
         if (modalOverlay) modalOverlay.style.display = 'none';
         this.render();
